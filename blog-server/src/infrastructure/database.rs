@@ -1,5 +1,18 @@
-use sqlx::PgPool;
+use sqlx::{postgres::PgPoolOptions, PgPool, migrate};
 
 pub async fn create_pool(database_url: &str) -> Result<PgPool, sqlx::Error> {
-    PgPool::connect(database_url).await
+    let pool = PgPoolOptions::new()
+        .max_connections(20)
+        .min_connections(5)
+        .acquire_timeout(std::time::Duration::from_secs(5))
+        .connect(&database_url)
+        .await?;
+    
+    Ok(pool)
+}
+
+pub async fn run_migrations(pool: &PgPool) -> Result<(), sqlx::Error> {
+    // Run all migrations from migrations/
+    migrate!("./migrations").run(pool).await?;
+    Ok(())
 }

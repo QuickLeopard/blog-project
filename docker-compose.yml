@@ -1,0 +1,35 @@
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: blog-postgres
+    environment:
+      POSTGRES_USER: blog_user
+      POSTGRES_PASSWORD: blog_password
+      POSTGRES_DB: blog
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U blog_user -d blog"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  blog-server:
+    build:
+      context: .
+      dockerfile: ./blog-server/Dockerfile
+    container_name: blog-server
+    environment:
+      DATABASE_URL: postgres://blog_user:blog_password@postgres:5432/blog
+      RUST_LOG: info
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
