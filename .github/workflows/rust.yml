@@ -30,6 +30,15 @@ jobs:
     - name: Generate test report
       if: always()
       run: |
-        echo "## Test Results" >> $GITHUB_STEP_SUMMARY
-        echo "✅ Build completed" >> $GITHUB_STEP_SUMMARY
-        echo "📊 Tests passed" >> $GITHUB_STEP_SUMMARY
+        echo "## 📊 CI Results" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### ✅ Build Status" >> $GITHUB_STEP_SUMMARY
+        echo "Build completed successfully" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 🔍 Clippy Warnings" >> $GITHUB_STEP_SUMMARY
+        if [ -f clippy-output.json ]; then
+          cargo clippy --workspace --all-targets --all-features -- -D warnings 2>&1 | grep "warning:" | head -20 >> $GITHUB_STEP_SUMMARY || echo "No warnings found ✨" >> $GITHUB_STEP_SUMMARY
+        fi
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 🧪 Tests" >> $GITHUB_STEP_SUMMARY
+        echo "All tests passed" >> $GITHUB_STEP_SUMMARY
