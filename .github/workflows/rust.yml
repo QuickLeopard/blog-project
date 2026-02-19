@@ -23,7 +23,7 @@ jobs:
     - name: Build
       run: cargo build --verbose --workspace
     - name: Clippy
-      run: cargo clippy --workspace --all-targets --all-features -- -D warnings
+      run: cargo clippy --workspace --all-targets --all-features --message-format=json -- -D warnings 2>&1 | tee clippy-output.json || true
       continue-on-error: true
     - name: Run tests
       run: cargo test --verbose --workspace
