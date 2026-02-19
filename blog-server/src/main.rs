@@ -28,10 +28,10 @@ async fn main() -> std::io::Result<()> {
                 .route("/health", web::get().to(health_check))
                 .route("/auth/register", web::post().to(register_user))
                 .route("/auth/login", web::post().to(login_user))
-                //.route("/posts", web::post().to(create_post))
+                .route("/posts", web::post().to(create_post))
                 .route("/posts/{id}", web::get().to(get_post))
-                /*.route("/posts/{id}", web::put().to(update_post))
-                .route("/posts/{id}", web::delete().to(delete_post))*/
+                .route("/posts/{id}", web::put().to(update_post))
+                .route("/posts/{id}", web::delete().to(delete_post))
                 .route("/posts", web::get().to(get_posts))
             )
     })

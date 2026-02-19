@@ -40,6 +40,20 @@ pub async fn login_user(user: web::Json<LoginRequest>) -> impl Responder {
     HttpResponse::Ok().json(login_response)
 }
 
+pub async fn create_post(post: web::Json<Post>) -> impl Responder {
+    
+    HttpResponse::Created().json(post)
+}
+
+pub async fn delete_post() -> impl Responder {
+    HttpResponse::Ok().json(serde_json::json!({"message": "Post deleted!"}))
+}
+
+pub async fn update_post(post: web::Json<Post>) -> impl Responder {
+    
+    HttpResponse::Ok().json(post)
+}
+
 pub async fn get_post(path: web::Path<i64>) -> impl Responder {
     let post_id = path.into_inner();
 
