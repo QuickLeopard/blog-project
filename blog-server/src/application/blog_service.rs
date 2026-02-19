@@ -1,10 +1,13 @@
 use crate::domain::{error::DomainError, post::Post};
+use crate::data::in_memory_post_repository::InMemoryPostRepository;
 
-pub struct BlogService;
+pub struct BlogService {
+    post_repository: InMemoryPostRepository,
+}
 
 impl BlogService {
-    pub fn new() -> Self {
-        Self
+    pub fn new(post_repository: InMemoryPostRepository) -> Self {
+        Self { post_repository }
     }
 
     pub async fn create_post(&self, title: String, content: String, author_id: i64) -> Result<Post, DomainError> {

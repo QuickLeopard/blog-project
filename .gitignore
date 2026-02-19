@@ -1,2 +1,8 @@
 /target
 .env
+.blog_token
+Cargo.lock
+.sqlx/
+.DS_Store
+*.html
+*.txt

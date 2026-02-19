@@ -7,7 +7,7 @@ mod infrastructure;
 mod presentation;
 
 use infrastructure::database::{create_pool, run_migrations};
-use presentation::http_handlers::{health_check};
+use presentation::http_handlers::{*};
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -24,7 +24,16 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(move || {
         App::new()
             .app_data(web::Data::new(pool.clone()))
-            .route("/health", web::get().to(health_check))
+            .service(web::scope("/api")
+                .route("/health", web::get().to(health_check))
+                .route("/auth/register", web::post().to(register_user))
+                .route("/auth/login", web::post().to(login_user))
+                //.route("/posts", web::post().to(create_post))
+                .route("/posts/{id}", web::get().to(get_post))
+                /*.route("/posts/{id}", web::put().to(update_post))
+                .route("/posts/{id}", web::delete().to(delete_post))*/
+                .route("/posts", web::get().to(get_posts))
+            )
     })
     .bind(&server_address)?
     .run()
