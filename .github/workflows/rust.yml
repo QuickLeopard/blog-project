@@ -41,10 +41,13 @@ jobs:
         echo "Build completed successfully" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### 🔍 Clippy Analysis" >> $GITHUB_STEP_SUMMARY
-        if grep -q "warning:" clippy.log; then
+        if grep -qE "(warning:|error:)" clippy.log; then
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-          grep "warning:" clippy.log | head -20 >> $GITHUB_STEP_SUMMARY
+          grep -E "(warning:|error:)" clippy.log | head -20 >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          ISSUE_COUNT=$(grep -cE "(warning:|error:)" clippy.log || echo "0")
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Found $ISSUE_COUNT issue(s)**" >> $GITHUB_STEP_SUMMARY
         else
           echo "✨ No warnings found - code is clean!" >> $GITHUB_STEP_SUMMARY
         fi
