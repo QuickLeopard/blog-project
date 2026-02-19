@@ -22,7 +22,7 @@ jobs:
         version: '23.x'
     - name: Build
       run: cargo build --verbose --workspace
-        - name: Clippy
+    - name: Clippy
       id: clippy
       run: |
         cargo clippy --workspace --all-targets --all-features -- -D warnings 2>&1 | tee clippy.log
