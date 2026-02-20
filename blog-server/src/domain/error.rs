@@ -23,3 +23,10 @@ pub enum DomainError {
     #[error("Internal error: {0}")]
     InternalError(String),
 }
+
+impl From<sqlx::Error> for DomainError {
+    fn from(err: sqlx::Error) -> Self {
+        DomainError::InternalError(err.to_string())
+    }
+}
+

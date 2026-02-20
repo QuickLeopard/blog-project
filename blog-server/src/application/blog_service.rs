@@ -1,32 +1,38 @@
-use crate::domain::{error::DomainError, post::Post};
-use crate::data::in_memory_post_repository::InMemoryPostRepository;
+use std::sync::Arc;
 
+use crate::domain::{error::DomainError, post::Post};
+use crate::data::PostRepository;
+
+//#[derive(Clone)]
 pub struct BlogService {
-    post_repository: InMemoryPostRepository,
+    post_repository: Arc<dyn PostRepository>,
 }
 
 impl BlogService {
-    pub fn new(post_repository: InMemoryPostRepository) -> Self {
+    pub fn new(post_repository: Arc<dyn PostRepository>) -> Self {
         Self { post_repository }
     }
 
     pub async fn create_post(&self, title: String, content: String, author_id: i64) -> Result<Post, DomainError> {
-        todo!("Implement post creation")
+        Ok(self.post_repository.create(title, content, author_id).await?)
+    }
+
+    pub async fn update_post(&self, id: i64, title: String, content: String, author_id: i64) -> Result<Post, DomainError> {
+        Ok(self.post_repository.update(id, title, content, author_id).await?)
+    }
+
+    pub async fn delete_post(&self, id: i64, author_id: i64) -> Result<bool, DomainError> {
+        Ok(self.post_repository.delete(id, author_id).await?)
     }
 
     pub async fn get_post(&self, id: i64) -> Result<Post, DomainError> {
-        todo!("Implement get post")
+        //todo!("Implement get post")
+        Ok(self.post_repository.find_by_id(id).await?)
     }
 
-    pub async fn update_post(&self, id: i64, title: String, content: String, user_id: i64) -> Result<Post, DomainError> {
-        todo!("Implement post update")
-    }
-
-    pub async fn delete_post(&self, id: i64, user_id: i64) -> Result<(), DomainError> {
-        todo!("Implement post deletion")
-    }
-
-    pub async fn list_posts(&self, page: i32, page_size: i32) -> Result<(Vec<Post>, i32), DomainError> {
-        todo!("Implement list posts")
+    pub async fn get_posts(&self, offset: i32, limit: i32) -> Result<Vec<Post>, DomainError> {
+        //todo!("Implement list posts")
+        let posts = self.post_repository.list(offset as i64, limit as i64).await?;
+        Ok(posts)
     }
 }
