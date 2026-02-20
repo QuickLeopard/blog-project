@@ -6,3 +6,6 @@ Cargo.lock
 .DS_Store
 *.html
 *.txt
+*.css
+*.js
+*.log
