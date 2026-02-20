@@ -81,8 +81,8 @@ message PostResponse {
 }
 
 message ListPostsRequest {
-  int32 page = 1;
-  int32 page_size = 2;
+  int32 offset = 1;
+  int32 limit = 2;
 }
 
 message ListPostsResponse {
