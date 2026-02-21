@@ -10,6 +10,18 @@ pub struct User {
     pub created_at: String,
 }
 
+impl User {
+    pub fn new (id: i64, username: String, email: String, password_hash: String, created_at: String) -> User {
+        Self {
+            id,
+            username,
+            email,
+            password_hash,
+            created_at,
+        }
+    }
+}
+
 #[derive(Debug, Deserialize)]
 pub struct RegisterUserRequest {
     pub username: String,

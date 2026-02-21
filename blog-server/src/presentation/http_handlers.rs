@@ -43,7 +43,7 @@ pub async fn login_user(user: web::Json<LoginRequest>, state: web::Data<AppState
 
 pub async fn create_post(post: web::Json<CreatePostRequest>, state: web::Data<AppState>) -> impl Responder {
     
-    let blog_service = state.blog_service.write().await;
+    let blog_service = state.blog_service.clone();//.write().await;
 
     let author_id = 1; //todo!("Extract auth id from token")
 
@@ -60,7 +60,7 @@ pub async fn delete_post(path: web::Path<i64>, state: web::Data<AppState>) -> im
 
     let auth_id = 1; //todo!("Extract auth id from token")
 
-    let blog_service = state.blog_service.write().await;
+    let blog_service = state.blog_service.clone();//.write().await;
 
     let r = blog_service.delete_post(post_id, auth_id).await;
 
@@ -74,7 +74,7 @@ pub async fn update_post(path: web::Path<i64>, post: web::Json<UpdatePostRequest
     
     let post_id = path.into_inner();
 
-    let blog_service = state.blog_service.write().await;
+    let blog_service = state.blog_service.clone();//.write().await;
 
     let author_id = 1; //todo!("Extract auth id from token")
 
@@ -93,7 +93,7 @@ pub async fn get_post(path: web::Path<i64>, state: web::Data<AppState>) -> impl 
         return HttpResponse::NotFound().json(serde_json::json!({"error": "Post not found"}));
     }
 
-    let blog_service = state.blog_service.read().await;
+    let blog_service = state.blog_service.clone();//.read().await;
 
     let post = blog_service.get_post(post_id).await;
     match post {
@@ -112,7 +112,7 @@ pub async fn get_posts(query: web::Query<PaginationQuery>, state: web::Data<AppS
     let offset = query.offset.unwrap_or(0);
     let limit = query.limit.unwrap_or(10);
 
-    let blog_service = state.blog_service.read().await;
+    let blog_service = state.blog_service.clone();//.read().await;
 
     let posts = blog_service.get_posts(offset as i32, limit as i32).await.unwrap_or_else(|_| vec![]);
     

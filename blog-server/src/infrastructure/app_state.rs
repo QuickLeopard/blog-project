@@ -1,7 +1,9 @@
+use crate::application::auth_service::AuthService;
 use crate::application::blog_service::BlogService;
 use tokio::sync::RwLock;
 use std::sync::Arc;
 
 pub struct AppState {
-    pub blog_service: Arc<RwLock<BlogService>>,
+    pub auth_service: Arc<AuthService>,
+    pub blog_service: Arc<BlogService>,//Arc<RwLock<BlogService>>,
 }

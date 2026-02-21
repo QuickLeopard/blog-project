@@ -1,14 +1,20 @@
-use crate::domain::{error::DomainError, user::User};
+use std::sync::Arc;
 
-pub struct AuthService;
+use crate::domain::{error::DomainError, user::User};
+use crate::data::UserRepository;
+
+pub struct AuthService {
+    user_repository: Arc<dyn UserRepository>,
+}
 
 impl AuthService {
-    pub fn new() -> Self {
-        Self
+    pub fn new(user_repository: Arc<dyn UserRepository>) -> Self {
+        Self { user_repository}
     }
 
     pub async fn register(&self, username: String, email: String, password: String) -> Result<User, DomainError> {
-        todo!("Implement user registration")
+        let password_hash = password;
+        Ok(self.user_repository.create(username, email, password_hash).await?)
     }
 
     pub async fn login(&self, username: String, password: String) -> Result<(User, String), DomainError> {

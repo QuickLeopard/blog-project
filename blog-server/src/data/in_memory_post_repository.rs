@@ -46,6 +46,13 @@ impl PostRepository for InMemoryPostRepository {
 
         println!("Created post: {:?}", post);
 
+        /*println!(
+            "📋 REPO ACCESS - Type: {}, Pointer: {:p}, Count: {}",
+            "create", // or "list", "find_by_id", etc.
+            self.posts.as_ref() as *const _,
+            self.posts.read().await.len()
+        );*/
+
         self.posts.write().await.insert(post.id, post.clone());
         Ok(post)
 
@@ -83,6 +90,16 @@ impl PostRepository for InMemoryPostRepository {
     async fn list(&self, offset: i64, limit: i64) -> Result<Vec<Post>, sqlx::Error> {
         //todo!("Implement list posts")
         let posts = self.posts.read().await;
+
+        println!("📋 LIST - Repository pointer: {:p}, count: {}", self.posts, posts.len());
+
+        println!(
+            "📋 REPO ACCESS - Type: {}, Pointer: {:p}",//, Count: {}",
+            "create", // or "list", "find_by_id", etc.
+            self.posts.as_ref() as *const _,
+            //self.posts.read().await.len()
+        );
+
         Ok(posts.values().cloned().skip(offset as usize).take(limit as usize).collect())
     }
 

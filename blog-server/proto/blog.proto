@@ -3,6 +3,7 @@ syntax = "proto3";
 package blog;
 
 service BlogService {
+  rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
   rpc Register(RegisterRequest) returns (AuthResponse);
   rpc Login(LoginRequest) returns (AuthResponse);
   rpc CreatePost(CreatePostRequest) returns (PostResponse);
@@ -10,6 +11,14 @@ service BlogService {
   rpc UpdatePost(UpdatePostRequest) returns (PostResponse);
   rpc DeletePost(DeletePostRequest) returns (DeletePostResponse);
   rpc ListPosts(ListPostsRequest) returns (ListPostsResponse);
+}
+
+message HealthCheckRequest {
+
+}
+
+message HealthCheckResponse {
+  string status = 1;
 }
 
 message RegisterRequest {
@@ -81,8 +90,8 @@ message PostResponse {
 }
 
 message ListPostsRequest {
-  int32 offset = 1;
-  int32 limit = 2;
+  optional int32 offset = 1;
+  optional int32 limit = 2;
 }
 
 message ListPostsResponse {

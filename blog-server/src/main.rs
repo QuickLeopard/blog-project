@@ -6,7 +6,7 @@ use std::sync::Arc;
 
 use tonic::transport::Server;
 
-use tracing_subscriber::EnvFilter;
+//use tracing_subscriber::EnvFilter;
 use tracing::info;
 
 mod application;
@@ -16,12 +16,16 @@ mod infrastructure;
 mod presentation;
 
 use application::blog_service::BlogService;
+use application::auth_service::AuthService;
+
 use data::in_memory_post_repository::InMemoryPostRepository;
+use data::in_memory_user_repository::InMemoryUserRepository;
+
 use infrastructure::database::{create_pool, run_migrations};
 use infrastructure::app_state::AppState;
 use presentation::http_handlers::{*};
 
-use presentation::grpc_service::{BlogServiceImpl, ServerState};
+use presentation::grpc_service::{BlogGrpcService};//, ServerState};
 use presentation::grpc_service::blog::blog_service_server::BlogServiceServer;
 
 pub mod blog {
@@ -55,20 +59,30 @@ async fn main() -> anyhow::Result<()> {
     run_migrations(&pool).await?;
 
     let http_address = "0.0.0.0:8080";
-    let grpc_address = "127.0.0.1:50051".parse()?;
+    let grpc_address = "0.0.0.0:50051".parse()?;
 
-    let app_state = web::Data::new(AppState {
-        blog_service: Arc::new(
-            RwLock::new(
+    let auth_service = Arc::new(
+            //RwLock::new(        
+                AuthService::new(
+                    Arc::new(InMemoryUserRepository::new())
+                )            
+            //)
+        );
+
+    let blog_service = Arc::new(
+            //RwLock::new(        
                 BlogService::new(
                     Arc::new(InMemoryPostRepository::new())
-                )
-            )
-        )
+                )            
+            //)
+        );
 
+    let app_state = web::Data::new(AppState { 
+        blog_service: blog_service.clone (),
+        auth_service: auth_service.clone (),
     });
 
-    let service = BlogServiceImpl::new(app_state.blog_service.clone());
+    let service = BlogGrpcService::new(auth_service.clone(), blog_service.clone());
     
     let reflection_service = tonic_reflection::server::Builder::configure()
         .register_encoded_file_descriptor_set(blog::FILE_DESCRIPTOR_SET)
@@ -101,11 +115,11 @@ async fn main() -> anyhow::Result<()> {
         .serve(grpc_address);
 
     tokio::select! {
-        res = http_server => {
-            res?;
+        result = http_server => {
+            result?;
         }
-        res = grpc_server => {
-            res?;
+        result = grpc_server => {
+            result?;
         }
     }
 
