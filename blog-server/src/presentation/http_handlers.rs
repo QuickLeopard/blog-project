@@ -18,7 +18,7 @@ pub async fn register_user(
     state: web::Data<AppState>,
 ) -> Result<impl Responder, DomainError> {
     let auth_service = state.auth_service.clone();
-    let user = auth_service
+    let (user, token) = auth_service
         .register(
             user.username.clone(),
             user.email.clone(),
@@ -27,7 +27,7 @@ pub async fn register_user(
         .await?;
 
     let register_response = LoginUserResponse {
-        token: "fake-jwt-token".to_string(),
+        token: token,
         user: user,
     };
 
@@ -41,12 +41,12 @@ pub async fn login_user(
 ) -> Result<impl Responder, DomainError> {
     let auth_service = state.auth_service.clone();
 
-    let user = auth_service
+    let (user, token) = auth_service
         .login(user.username.clone(), user.password.clone())
         .await?;
 
     let login_response = LoginUserResponse {
-        token: "fake-jwt-token".to_string(),
+        token: token,
         user: user,
     };
 

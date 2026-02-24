@@ -25,6 +25,9 @@ pub enum DomainError {
     #[error("Argon2 error: {0}")]
     Argon2Error(String),
 
+    #[error("JWT error: {0}")]
+    JWTError(#[from] jsonwebtoken::errors::Error),
+
     /*#[error("Database row not found")]
     DatabaseRowNotFound,*/
     #[error("Internal error: {0}")]

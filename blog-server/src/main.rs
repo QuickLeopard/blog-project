@@ -28,6 +28,8 @@ use presentation::http_handlers::*;
 use presentation::grpc_service::BlogGrpcService; //, ServerState};
 use presentation::grpc_service::blog::blog_service_server::BlogServiceServer;
 
+use crate::infrastructure::jwt::JwtService;
+
 pub mod blog {
     tonic::include_proto!("blog");
     pub const FILE_DESCRIPTOR_SET: &[u8] = tonic::include_file_descriptor_set!("blog_descriptor");
@@ -61,9 +63,11 @@ async fn main() -> anyhow::Result<()> {
     let http_address = "0.0.0.0:3000";
     let grpc_address = "0.0.0.0:50051".parse()?;
 
+    let secret_token = std::env::var("SECRET_TOKEN").unwrap_or_else(|_| "wt35y4urtjfgjhfgjfjfgjgfjfgjrtj454e5634tafazf".to_string());
+
     let auth_service = Arc::new(
         //RwLock::new(
-        AuthService::new(Arc::new(InMemoryUserRepository::new())), //)
+        AuthService::new(Arc::new(InMemoryUserRepository::new()), JwtService::new(&secret_token)), //)
     );
 
     let blog_service = Arc::new(

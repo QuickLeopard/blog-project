@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Claims {
     pub user_id: i64,
-    pub username: String,
+    pub user_name: String,
     pub exp: usize,
 }
 
@@ -17,21 +17,41 @@ pub struct JwtService {
 
 impl JwtService {
     pub fn new(secret: &str) -> Self {
-        // Initialize any necessary data, e.g., secret key
         Self {
             secret: secret.into(),
         }
     }
 
     pub fn generate_token(
+        &self, 
         user_id: i64,
         user_name: &str,
     ) -> Result<String, jsonwebtoken::errors::Error> {
-        todo!("Implement token creation")
+         let claims = Claims {
+            user_id: user_id,
+            user_name: user_name.to_string (),
+            exp: chrono::Utc::now()
+                .checked_add_signed(chrono::Duration::hours(1))
+                .ok_or_else(|| jsonwebtoken::errors::Error::from(
+                    jsonwebtoken::errors::ErrorKind::InvalidToken
+                ))?
+                .timestamp() as usize,           
+        };
+
+        encode(
+            &Header::default(),
+            &claims,
+            &EncodingKey::from_secret(self.secret.as_bytes()),
+        )
     }
 
-    pub fn verify_token(token: &str) -> Result<Claims, jsonwebtoken::errors::Error> {
-        todo!("Implement token verification")
+    pub fn verify_token(&self, token: &str) -> Result<Claims, jsonwebtoken::errors::Error> {
+         let data = decode::<Claims>(
+            token,
+            &DecodingKey::from_secret(self.secret.as_bytes()),
+            &Validation::default(),
+        )?;
+        Ok(data.claims)
     }
 
 }
