@@ -22,15 +22,16 @@ impl JwtService {
             secret: secret.into(),
         }
     }
-}
 
-pub fn generate_token(
-    user_id: i64,
-    user_name: &str,
-) -> Result<String, jsonwebtoken::errors::Error> {
-    todo!("Implement token creation")
-}
+    pub fn generate_token(
+        user_id: i64,
+        user_name: &str,
+    ) -> Result<String, jsonwebtoken::errors::Error> {
+        todo!("Implement token creation")
+    }
 
-pub fn verify_token(token: &str) -> Result<Claims, jsonwebtoken::errors::Error> {
-    todo!("Implement token verification")
+    pub fn verify_token(token: &str) -> Result<Claims, jsonwebtoken::errors::Error> {
+        todo!("Implement token verification")
+    }
+
 }
