@@ -2,8 +2,8 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
-use async_trait::async_trait;
 use crate::data::PostRepository;
+use async_trait::async_trait;
 
 use crate::domain::post::Post;
 
@@ -23,9 +23,12 @@ impl InMemoryPostRepository {
 
 #[async_trait]
 impl PostRepository for InMemoryPostRepository {
-
-    async fn create(&self, title: String, content: String, author_id: i64) -> Result<Post, sqlx::Error> {
-
+    async fn create(
+        &self,
+        title: String,
+        content: String,
+        author_id: i64,
+    ) -> Result<Post, sqlx::Error> {
         let timestamp = chrono::Utc::now().to_rfc3339();
 
         let post_id = {
@@ -55,7 +58,6 @@ impl PostRepository for InMemoryPostRepository {
 
         self.posts.write().await.insert(post.id, post.clone());
         Ok(post)
-
     }
 
     async fn find_by_id(&self, id: i64) -> Result<Post, sqlx::Error> {
@@ -64,10 +66,18 @@ impl PostRepository for InMemoryPostRepository {
         posts.get(&id).cloned().ok_or(sqlx::Error::RowNotFound)
     }
 
-    async fn update(&self, id: i64, title: String, content: String, author_id: i64) -> Result<Post, sqlx::Error> {
+    async fn update(
+        &self,
+        id: i64,
+        title: String,
+        content: String,
+        author_id: i64,
+    ) -> Result<Post, sqlx::Error> {
         //todo!("Implement post update")
         let mut posts = self.posts.write().await;
-        if let Some(post) = posts.get_mut(&id) && post.author_id == author_id {
+        if let Some(post) = posts.get_mut(&id)
+            && post.author_id == author_id
+        {
             post.title = title;
             post.content = content;
             post.updated_at = chrono::Utc::now().to_rfc3339().to_string();
@@ -80,7 +90,9 @@ impl PostRepository for InMemoryPostRepository {
     async fn delete(&self, id: i64, author_id: i64) -> Result<bool, sqlx::Error> {
         //todo!("Implement post deletion")
         let mut posts = self.posts.write().await;
-        if let Some(post) = posts.get(&id) && post.author_id == author_id {
+        if let Some(post) = posts.get(&id)
+            && post.author_id == author_id
+        {
             Ok(posts.remove(&id).is_some())
         } else {
             Err(sqlx::Error::RowNotFound)
@@ -91,16 +103,25 @@ impl PostRepository for InMemoryPostRepository {
         //todo!("Implement list posts")
         let posts = self.posts.read().await;
 
-        println!("📋 LIST - Repository pointer: {:p}, count: {}", self.posts, posts.len());
+        println!(
+            "📋 LIST - Repository pointer: {:p}, count: {}",
+            self.posts,
+            posts.len()
+        );
 
         println!(
-            "📋 REPO ACCESS - Type: {}, Pointer: {:p}",//, Count: {}",
-            "create", // or "list", "find_by_id", etc.
+            "📋 REPO ACCESS - Type: {}, Pointer: {:p}", //, Count: {}",
+            "create",                                   // or "list", "find_by_id", etc.
             self.posts.as_ref() as *const _,
             //self.posts.read().await.len()
         );
 
-        Ok(posts.values().cloned().skip(offset as usize).take(limit as usize).collect())
+        Ok(posts
+            .values()
+            .cloned()
+            .skip(offset as usize)
+            .take(limit as usize)
+            .collect())
     }
 
     async fn count(&self) -> Result<i64, sqlx::Error> {

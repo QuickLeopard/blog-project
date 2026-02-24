@@ -1,8 +1,8 @@
-use actix_web::{web, App, HttpServer, HttpResponse, Result};
 use actix_web::middleware::Logger;
+use actix_web::{App, HttpResponse, HttpServer, Result, web};
 
-use tokio::sync::RwLock;
 use std::sync::Arc;
+use tokio::sync::RwLock;
 
 use tonic::transport::Server;
 
@@ -15,17 +15,17 @@ mod domain;
 mod infrastructure;
 mod presentation;
 
-use application::blog_service::BlogService;
 use application::auth_service::AuthService;
+use application::blog_service::BlogService;
 
 use data::in_memory_post_repository::InMemoryPostRepository;
 use data::in_memory_user_repository::InMemoryUserRepository;
 
-use infrastructure::database::{create_pool, run_migrations};
 use infrastructure::app_state::AppState;
-use presentation::http_handlers::{*};
+use infrastructure::database::{create_pool, run_migrations};
+use presentation::http_handlers::*;
 
-use presentation::grpc_service::{BlogGrpcService};//, ServerState};
+use presentation::grpc_service::BlogGrpcService; //, ServerState};
 use presentation::grpc_service::blog::blog_service_server::BlogServiceServer;
 
 pub mod blog {
@@ -51,39 +51,33 @@ async fn main() -> anyhow::Result<()> {
     )
     .init();*/
 
-    let database_url = std::env::var("DATABASE_URL")
-        .unwrap_or_else(|_| "postgres://localhost/blog".to_string());
+    let database_url =
+        std::env::var("DATABASE_URL").unwrap_or_else(|_| "postgres://localhost/blog".to_string());
 
     let pool = create_pool(&database_url).await?;
-    
+
     run_migrations(&pool).await?;
 
-    let http_address = "0.0.0.0:8080";
+    let http_address = "0.0.0.0:3000";
     let grpc_address = "0.0.0.0:50051".parse()?;
 
     let auth_service = Arc::new(
-            //RwLock::new(        
-                AuthService::new(
-                    Arc::new(InMemoryUserRepository::new())
-                )            
-            //)
-        );
+        //RwLock::new(
+        AuthService::new(Arc::new(InMemoryUserRepository::new())), //)
+    );
 
     let blog_service = Arc::new(
-            //RwLock::new(        
-                BlogService::new(
-                    Arc::new(InMemoryPostRepository::new())
-                )            
-            //)
-        );
+        //RwLock::new(
+        BlogService::new(Arc::new(InMemoryPostRepository::new())), //)
+    );
 
-    let app_state = web::Data::new(AppState { 
-        blog_service: blog_service.clone (),
-        auth_service: auth_service.clone (),
+    let app_state = web::Data::new(AppState {
+        blog_service: blog_service.clone(),
+        auth_service: auth_service.clone(),
     });
 
     let service = BlogGrpcService::new(auth_service.clone(), blog_service.clone());
-    
+
     let reflection_service = tonic_reflection::server::Builder::configure()
         .register_encoded_file_descriptor_set(blog::FILE_DESCRIPTOR_SET)
         .build()?;
@@ -92,23 +86,14 @@ async fn main() -> anyhow::Result<()> {
         App::new()
             .wrap(Logger::default())
             .app_data(app_state.clone())
-            .service(web::scope("/api")
-                .route("/health", web::get().to(health_check))
-                .route("/auth/register", web::post().to(register_user))
-                .route("/auth/login", web::post().to(login_user))
-                .route("/posts", web::post().to(create_post))
-                .route("/posts/{id}", web::get().to(get_post))
-                .route("/posts/{id}", web::put().to(update_post))
-                .route("/posts/{id}", web::delete().to(delete_post))
-                .route("/posts", web::get().to(get_posts))
-            )
+            .configure(configure)
     })
     .bind(&http_address)?
     .run();
 
     info!("🚀 Blog HTTP server started on {}", http_address);
     info!("🚀 Blog gRPC server starting on {}", grpc_address);
-    
+
     let grpc_server = Server::builder()
         .add_service(BlogServiceServer::new(service))
         .add_service(reflection_service)
@@ -124,4 +109,4 @@ async fn main() -> anyhow::Result<()> {
     }
 
     Ok(())
-} 
+}

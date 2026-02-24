@@ -11,7 +11,14 @@ pub struct Post {
 }
 
 impl Post {
-    pub fn new(id: i64, title: String, content: String, author_id: i64, created_at: String, updated_at: String) -> Self {
+    pub fn new(
+        id: i64,
+        title: String,
+        content: String,
+        author_id: i64,
+        created_at: String,
+        updated_at: String,
+    ) -> Self {
         Self {
             id,
             title,

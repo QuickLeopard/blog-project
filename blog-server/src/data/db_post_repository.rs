@@ -1,9 +1,8 @@
-
 use async_trait::async_trait;
 use sqlx::{Pool, Postgres};
 
-use crate::domain::post::Post;
 use crate::data::PostRepository;
+use crate::domain::post::Post;
 
 pub struct DBPostRepository {
     pool: Pool<Postgres>,
@@ -13,12 +12,16 @@ impl DBPostRepository {
     pub fn new(pool: Pool<Postgres>) -> Self {
         Self { pool }
     }
-
 }
 
 #[async_trait]
 impl PostRepository for DBPostRepository {
-    async fn create(&self, title: String, content: String, author_id: i64) -> Result<Post, sqlx::Error> {
+    async fn create(
+        &self,
+        title: String,
+        content: String,
+        author_id: i64,
+    ) -> Result<Post, sqlx::Error> {
         todo!("Implement post creation")
     }
 
@@ -26,7 +29,13 @@ impl PostRepository for DBPostRepository {
         todo!("Implement find by id")
     }
 
-    async fn update(&self, id: i64, title: String, content: String, author_id: i64) -> Result<Post, sqlx::Error> {
+    async fn update(
+        &self,
+        id: i64,
+        title: String,
+        content: String,
+        author_id: i64,
+    ) -> Result<Post, sqlx::Error> {
         todo!("Implement post update")
     }
 

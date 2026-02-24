@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
-use crate::domain::{error::DomainError, post::Post};
 use crate::data::PostRepository;
+use crate::domain::{error::DomainError, post::Post};
 
 //#[derive(Clone)]
 pub struct BlogService {
@@ -13,12 +13,29 @@ impl BlogService {
         Self { post_repository }
     }
 
-    pub async fn create_post(&self, title: String, content: String, author_id: i64) -> Result<Post, DomainError> {
-        Ok(self.post_repository.create(title, content, author_id).await?)
+    pub async fn create_post(
+        &self,
+        title: String,
+        content: String,
+        author_id: i64,
+    ) -> Result<Post, DomainError> {
+        Ok(self
+            .post_repository
+            .create(title, content, author_id)
+            .await?)
     }
 
-    pub async fn update_post(&self, id: i64, title: String, content: String, author_id: i64) -> Result<Post, DomainError> {
-        Ok(self.post_repository.update(id, title, content, author_id).await?)
+    pub async fn update_post(
+        &self,
+        id: i64,
+        title: String,
+        content: String,
+        author_id: i64,
+    ) -> Result<Post, DomainError> {
+        Ok(self
+            .post_repository
+            .update(id, title, content, author_id)
+            .await?)
     }
 
     pub async fn delete_post(&self, id: i64, author_id: i64) -> Result<bool, DomainError> {
@@ -32,7 +49,10 @@ impl BlogService {
 
     pub async fn get_posts(&self, offset: i32, limit: i32) -> Result<Vec<Post>, DomainError> {
         //todo!("Implement list posts")
-        let posts = self.post_repository.list(offset as i64, limit as i64).await?;
+        let posts = self
+            .post_repository
+            .list(offset as i64, limit as i64)
+            .await?;
 
         println!(
             "🔍 BlogService::get_posts - Service: {:p}",

@@ -1,15 +1,15 @@
-
+use async_trait::async_trait;
+use sqlx::error::DatabaseError;
 use std::collections::HashMap;
 use std::sync::Arc;
-use sqlx::error::DatabaseError;
 use tokio::sync::RwLock;
 
+use crate::domain::error::DomainError;
 use crate::domain::user::User;
-use async_trait::async_trait;
 
 use crate::data::UserRepository;
 
-pub struct InMemoryUserRepository{
+pub struct InMemoryUserRepository {
     users: Arc<RwLock<HashMap<i64, User>>>,
     next_user_id: Arc<RwLock<i64>>,
 }
@@ -25,8 +25,21 @@ impl InMemoryUserRepository {
 
 #[async_trait]
 impl UserRepository for InMemoryUserRepository {
+    async fn create(
+        &self,
+        username: String,
+        email: String,
+        password_hash: String,
+    ) -> Result<User, DomainError> {
+        let mut repository = self.users.write().await;
 
-    async fn create(&self, username: String, email: String, password_hash: String) -> Result<User, sqlx::Error> {
+        if repository.values().any(|u| u.username == username)
+            || repository.values().any(|u| u.email == email)
+        {
+            return Err(DomainError::UserAlreadyExists(
+                "User with this username or email already exists".to_string(),
+            ));
+        }
 
         let timestamp = chrono::Utc::now().to_rfc3339();
 
@@ -37,25 +50,22 @@ impl UserRepository for InMemoryUserRepository {
             id
         };
 
-        let mut repository = self.users.write().await;
-
         let user = User::new(user_id, username, email, password_hash, timestamp);
 
-        repository.insert(user_id, user.clone()).ok_or(sqlx::Error::RowNotFound) //sqlx::Error::RowNotFound)
-
-        /*if let None = repository.insert(user_id, user.clone()) {
-
-        }
-
-        Ok(user)*/
+        repository.insert(user_id, user.clone());
+        Ok(user)
     }
 
-    async fn find_by_username(&self, username: &str) -> Result<Option<User>, sqlx::Error> {
-        todo!("Implement find by username")
+    async fn find_by_username(&self, username: &str) -> Result<Option<User>, DomainError> {
+        let repository = self.users.read().await;
+        Ok(repository
+            .values()
+            .find(|u| u.username == username)
+            .cloned())
     }
 
-    async fn find_by_id(&self, id: i64) -> Result<Option<User>, sqlx::Error> {
-        todo!("Implement find by id")
+    async fn find_by_id(&self, id: i64) -> Result<Option<User>, DomainError> {
+        let repository = self.users.read().await;
+        Ok(repository.get(&id).cloned())
     }
-
 }
