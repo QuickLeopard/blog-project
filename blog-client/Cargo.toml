@@ -9,6 +9,10 @@ tonic = { workspace = true }
 prost = { workspace = true }
 reqwest = { workspace = true }
 serde = { workspace = true }
+serde_json = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+chrono = { workspace = true }
 
 [build-dependencies]
 tonic-build = { workspace = true }
