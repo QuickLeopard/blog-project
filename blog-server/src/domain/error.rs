@@ -19,6 +19,9 @@ pub enum DomainError {
     #[error("Forbidden: you don't have permission to perform this action")]
     Forbidden,
 
+    #[error("Validation error: {0}")]
+    ValidationError(String),
+
     #[error("Database error: {0}")]
     DatabaseError(#[from] sqlx::Error),
 
@@ -58,6 +61,7 @@ impl ResponseError for DomainError {
             DomainError::UserAlreadyExists(_) => StatusCode::CONFLICT,
             DomainError::InvalidCredentials => StatusCode::UNAUTHORIZED,
             DomainError::Forbidden => StatusCode::FORBIDDEN,
+            DomainError::ValidationError(_) => StatusCode::BAD_REQUEST,
             DomainError::DatabaseError(_) => StatusCode::INTERNAL_SERVER_ERROR,
             DomainError::InternalError(_) => StatusCode::INTERNAL_SERVER_ERROR,
             _ => StatusCode::INTERNAL_SERVER_ERROR,
@@ -80,6 +84,7 @@ impl From<DomainError> for tonic::Status {
             //DomainError::DatabaseRowNotFound => tonic::Status::not_found(err.to_string()),
             DomainError::InvalidCredentials => tonic::Status::unauthenticated(err.to_string()),
             DomainError::Forbidden => tonic::Status::permission_denied(err.to_string()),
+            DomainError::ValidationError(_) => tonic::Status::invalid_argument(err.to_string()),
             _ => tonic::Status::internal(err.to_string()),
         }
     }

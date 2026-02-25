@@ -1,7 +1,7 @@
+use actix_web::dev::Payload;
+use actix_web::{Error, FromRequest, HttpRequest, error::ErrorUnauthorized, web};
 use std::future::Future;
 use std::pin::Pin;
-use actix_web::{Error, FromRequest, HttpRequest, error::ErrorUnauthorized, web};
-use actix_web::dev::Payload;
 
 use crate::infrastructure::app_state::AppState;
 
@@ -48,8 +48,6 @@ impl FromRequest for AuthenticatedUser {
         })
     }
 }
-
-
 
 /*use actix_web::dev::{Payload, ServiceRequest};
 use actix_web::{Error, FromRequest, HttpMessage, HttpRequest, error::ErrorUnauthorized, web};

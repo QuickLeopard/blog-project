@@ -64,16 +64,16 @@ impl blog::blog_service_server::BlogService for BlogGrpcService {
         &self,
         request: Request<blog::RegisterRequest>,
     ) -> Result<Response<blog::AuthResponse>, Status> {
-
         let request = request.into_inner();
 
-        let (user, token) = self.auth_service
-        .register(
-            request.username.clone(),
-            request.email.clone(),
-            request.password.clone(),
-        )
-        .await?;
+        let (user, token) = self
+            .auth_service
+            .register(
+                request.username.clone(),
+                request.email.clone(),
+                request.password.clone(),
+            )
+            .await?;
 
         let response = blog::AuthResponse {
             success: true,
@@ -96,9 +96,10 @@ impl blog::blog_service_server::BlogService for BlogGrpcService {
     ) -> Result<Response<blog::AuthResponse>, Status> {
         let request = request.into_inner();
 
-        let (user, token) = self.auth_service
-        .login(request.username.clone(), request.password.clone())
-        .await?;
+        let (user, token) = self
+            .auth_service
+            .login(request.username.clone(), request.password.clone())
+            .await?;
 
         let response = blog::AuthResponse {
             success: true,
@@ -119,7 +120,6 @@ impl blog::blog_service_server::BlogService for BlogGrpcService {
         &self,
         request: Request<blog::CreatePostRequest>,
     ) -> Result<Response<blog::PostResponse>, Status> {
-
         //let token = request.metadata().get("authorization");
 
         let auth_token = Self::get_auth_token(&request)?;
@@ -148,7 +148,6 @@ impl blog::blog_service_server::BlogService for BlogGrpcService {
         &self,
         request: Request<blog::UpdatePostRequest>,
     ) -> Result<Response<blog::PostResponse>, Status> {
-
         let auth_token = Self::get_auth_token(&request)?;
 
         let claims = self.auth_service.verify_token(&auth_token)?;
@@ -181,7 +180,10 @@ impl blog::blog_service_server::BlogService for BlogGrpcService {
 
         let request = request.into_inner();
 
-        let r = self.blog_service.delete_post(request.id, claims.user_id).await?;
+        let r = self
+            .blog_service
+            .delete_post(request.id, claims.user_id)
+            .await?;
 
         let response = blog::DeletePostResponse {
             success: r,
@@ -199,7 +201,6 @@ impl blog::blog_service_server::BlogService for BlogGrpcService {
         &self,
         request: Request<blog::GetPostRequest>,
     ) -> Result<Response<blog::PostResponse>, Status> {
-
         let request = request.into_inner();
 
         let post = self.blog_service.get_post(request.id).await?;

@@ -2,6 +2,8 @@ use std::sync::Arc;
 
 use tracing::instrument;
 
+use validator::ValidateEmail;
+
 use crate::data::UserRepository;
 use crate::domain::{error::DomainError, user::User};
 use crate::infrastructure::hash::{hash_password, verify_password};
@@ -27,6 +29,18 @@ impl AuthService {
         email: String,
         password: String,
     ) -> Result<(User, String), DomainError> {
+        if username.is_empty() || email.is_empty() || password.is_empty() {
+            return Err(DomainError::ValidationError(
+                "username, email and password must not be empty".to_string(),
+            ));
+        }
+
+        if !email.validate_email() {
+            return Err(DomainError::ValidationError(
+                "invalid email format".to_string(),
+            ));
+        }
+
         let password_hash = hash_password(&password)?;
         let user = self
             .user_repository
@@ -44,6 +58,12 @@ impl AuthService {
         username: String,
         password: String,
     ) -> Result<(User, String), DomainError> {
+        if username.is_empty() || password.is_empty() {
+            return Err(DomainError::ValidationError(
+                "username and password must not be empty".to_string(),
+            ));
+        }
+
         let user = self
             .user_repository
             .find_by_username(&username)

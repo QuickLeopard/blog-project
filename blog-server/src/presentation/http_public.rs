@@ -7,10 +7,10 @@ use crate::infrastructure::app_state::AppState;
 
 pub fn configure(cfg: &mut web::ServiceConfig) {
     cfg.service(health_check)
-       .service(register_user)
-       .service(login_user)
-       .service(get_post)
-       .service(get_posts);
+        .service(register_user)
+        .service(login_user)
+        .service(get_post)
+        .service(get_posts);
 }
 
 #[get("/health")]

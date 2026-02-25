@@ -1,5 +1,5 @@
 use actix_web::{HttpResponse, Responder, Scope, delete, post, put, web};
-use tracing::info; 
+use tracing::info;
 
 use crate::domain::error::DomainError;
 use crate::domain::post::{CreatePostRequest, UpdatePostRequest};
@@ -8,10 +8,9 @@ use crate::presentation::middleware::AuthenticatedUser;
 
 pub fn configure(cfg: &mut web::ServiceConfig) {
     cfg.service(create_post)
-       .service(delete_post)
-       .service(update_post);
+        .service(delete_post)
+        .service(update_post);
 }
-
 
 #[post("/posts")]
 pub async fn create_post(

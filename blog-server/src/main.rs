@@ -120,7 +120,7 @@ async fn main() -> anyhow::Result<()> {
             .service(
                 web::scope("/api")
                     .configure(http_public::configure)
-                    .configure(http_protected::configure)
+                    .configure(http_protected::configure),
             )
         //.configure(configure)
     })
