@@ -5,6 +5,7 @@ use tokio::sync::RwLock;
 use crate::data::PostRepository;
 use async_trait::async_trait;
 
+use crate::domain::error::DomainError;
 use crate::domain::post::Post;
 
 pub struct InMemoryPostRepository {
@@ -28,7 +29,7 @@ impl PostRepository for InMemoryPostRepository {
         title: String,
         content: String,
         author_id: i64,
-    ) -> Result<Post, sqlx::Error> {
+    ) -> Result<Post, DomainError> {
         let timestamp = chrono::Utc::now().to_rfc3339();
 
         let post_id = {
@@ -60,10 +61,10 @@ impl PostRepository for InMemoryPostRepository {
         Ok(post)
     }
 
-    async fn find_by_id(&self, id: i64) -> Result<Post, sqlx::Error> {
+    async fn find_by_id(&self, id: i64) -> Result<Post, DomainError> {
         //todo!("Implement find by id")
         let posts = self.posts.read().await;
-        posts.get(&id).cloned().ok_or(sqlx::Error::RowNotFound)
+        posts.get(&id).cloned().ok_or(DomainError::PostNotFound)
     }
 
     async fn update(
@@ -72,7 +73,7 @@ impl PostRepository for InMemoryPostRepository {
         title: String,
         content: String,
         author_id: i64,
-    ) -> Result<Post, sqlx::Error> {
+    ) -> Result<Post, DomainError> {
         //todo!("Implement post update")
         let mut posts = self.posts.write().await;
         if let Some(post) = posts.get_mut(&id)
@@ -83,11 +84,11 @@ impl PostRepository for InMemoryPostRepository {
             post.updated_at = chrono::Utc::now().to_rfc3339().to_string();
             Ok(post.clone())
         } else {
-            Err(sqlx::Error::RowNotFound)
+            Err(DomainError::PostNotFound)
         }
     }
 
-    async fn delete(&self, id: i64, author_id: i64) -> Result<bool, sqlx::Error> {
+    async fn delete(&self, id: i64, author_id: i64) -> Result<bool, DomainError> {
         //todo!("Implement post deletion")
         let mut posts = self.posts.write().await;
         if let Some(post) = posts.get(&id)
@@ -95,11 +96,11 @@ impl PostRepository for InMemoryPostRepository {
         {
             Ok(posts.remove(&id).is_some())
         } else {
-            Err(sqlx::Error::RowNotFound)
+            Err(DomainError::PostNotFound)
         }
     }
 
-    async fn list(&self, offset: i64, limit: i64) -> Result<Vec<Post>, sqlx::Error> {
+    async fn list(&self, offset: i64, limit: i64) -> Result<Vec<Post>, DomainError> {
         //todo!("Implement list posts")
         let posts = self.posts.read().await;
 
@@ -124,7 +125,7 @@ impl PostRepository for InMemoryPostRepository {
             .collect())
     }
 
-    async fn count(&self) -> Result<i64, sqlx::Error> {
+    async fn count(&self) -> Result<i64, DomainError> {
         //todo!("Implement count posts")
         let posts = self.posts.read().await;
         Ok(posts.len() as i64)

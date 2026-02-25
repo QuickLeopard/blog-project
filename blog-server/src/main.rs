@@ -1,8 +1,10 @@
 use actix_web::middleware::Logger;
-use actix_web::{App, HttpResponse, HttpServer, Result, web};
+use actix_web::{App, HttpServer, web};
+
+use actix_cors::Cors;
+use actix_web::dev::AppConfig;
 
 use std::sync::Arc;
-use tokio::sync::RwLock;
 
 use tonic::transport::Server;
 
@@ -23,7 +25,10 @@ use data::in_memory_user_repository::InMemoryUserRepository;
 
 use infrastructure::app_state::AppState;
 use infrastructure::database::{create_pool, run_migrations};
-use presentation::http_handlers::*;
+
+use presentation::http_protected;
+use presentation::http_public;
+//use presentation::middleware::jwt_validator;
 
 use presentation::grpc_service::BlogGrpcService; //, ServerState};
 use presentation::grpc_service::blog::blog_service_server::BlogServiceServer;
@@ -33,6 +38,21 @@ use crate::infrastructure::jwt::JwtService;
 pub mod blog {
     tonic::include_proto!("blog");
     pub const FILE_DESCRIPTOR_SET: &[u8] = tonic::include_file_descriptor_set!("blog_descriptor");
+}
+
+fn build_cors(config: &AppConfig) -> Cors {
+    let mut cors = Cors::default()
+        .allowed_methods(vec!["GET", "POST", "PUT", "DELETE", "OPTIONS"])
+        .allow_any_header()
+        .allow_any_origin()
+        .supports_credentials()
+        .max_age(3600);
+
+    /*for origin in &config.cors_origins {
+        cors = cors.allowed_origin(origin);
+    }*/
+
+    cors
 }
 
 #[actix_web::main]
@@ -63,11 +83,17 @@ async fn main() -> anyhow::Result<()> {
     let http_address = "0.0.0.0:3000";
     let grpc_address = "0.0.0.0:50051".parse()?;
 
-    let secret_token = std::env::var("SECRET_TOKEN").unwrap_or_else(|_| "wt35y4urtjfgjhfgjfjfgjgfjfgjrtj454e5634tafazf".to_string());
+    let secret_token = std::env::var("SECRET_TOKEN")
+        .unwrap_or_else(|_| "wt35y4urtjfgjhfgjfjfgjgfjfgjrtj454e5634tafazf".to_string());
+
+    //let auth_middleware = HttpAuthentication::bearer(jwt_validator);
 
     let auth_service = Arc::new(
         //RwLock::new(
-        AuthService::new(Arc::new(InMemoryUserRepository::new()), JwtService::new(&secret_token)), //)
+        AuthService::new(
+            Arc::new(InMemoryUserRepository::new()),
+            JwtService::new(&secret_token),
+        ), //)
     );
 
     let blog_service = Arc::new(
@@ -89,8 +115,14 @@ async fn main() -> anyhow::Result<()> {
     let http_server = HttpServer::new(move || {
         App::new()
             .wrap(Logger::default())
+            .wrap(build_cors(&AppConfig::default()))
             .app_data(app_state.clone())
-            .configure(configure)
+            .service(
+                web::scope("/api")
+                    .configure(http_public::configure)
+                    .configure(http_protected::configure)
+            )
+        //.configure(configure)
     })
     .bind(&http_address)?
     .run();

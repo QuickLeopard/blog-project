@@ -2,6 +2,7 @@ use async_trait::async_trait;
 use sqlx::{Pool, Postgres};
 
 use crate::data::PostRepository;
+use crate::domain::error::DomainError;
 use crate::domain::post::Post;
 
 pub struct DBPostRepository {
@@ -21,11 +22,11 @@ impl PostRepository for DBPostRepository {
         title: String,
         content: String,
         author_id: i64,
-    ) -> Result<Post, sqlx::Error> {
+    ) -> Result<Post, DomainError> {
         todo!("Implement post creation")
     }
 
-    async fn find_by_id(&self, id: i64) -> Result<Post, sqlx::Error> {
+    async fn find_by_id(&self, id: i64) -> Result<Post, DomainError> {
         todo!("Implement find by id")
     }
 
@@ -35,19 +36,19 @@ impl PostRepository for DBPostRepository {
         title: String,
         content: String,
         author_id: i64,
-    ) -> Result<Post, sqlx::Error> {
+    ) -> Result<Post, DomainError> {
         todo!("Implement post update")
     }
 
-    async fn delete(&self, id: i64, author_id: i64) -> Result<bool, sqlx::Error> {
+    async fn delete(&self, id: i64, author_id: i64) -> Result<bool, DomainError> {
         todo!("Implement post deletion")
     }
 
-    async fn list(&self, offset: i64, limit: i64) -> Result<Vec<Post>, sqlx::Error> {
+    async fn list(&self, offset: i64, limit: i64) -> Result<Vec<Post>, DomainError> {
         todo!("Implement list posts")
     }
 
-    async fn count(&self) -> Result<i64, sqlx::Error> {
+    async fn count(&self) -> Result<i64, DomainError> {
         todo!("Implement count posts")
     }
 }

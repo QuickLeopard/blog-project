@@ -76,6 +76,7 @@ impl From<DomainError> for tonic::Status {
             DomainError::UserNotFound => tonic::Status::not_found(err.to_string()),
             DomainError::PostNotFound => tonic::Status::not_found(err.to_string()),
             DomainError::DatabaseError(_) => tonic::Status::internal(err.to_string()),
+            DomainError::JWTError(_) => tonic::Status::unauthenticated(err.to_string()),
             //DomainError::DatabaseRowNotFound => tonic::Status::not_found(err.to_string()),
             DomainError::InvalidCredentials => tonic::Status::unauthenticated(err.to_string()),
             DomainError::Forbidden => tonic::Status::permission_denied(err.to_string()),

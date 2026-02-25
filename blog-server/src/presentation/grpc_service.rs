@@ -1,7 +1,6 @@
 use tonic::{Request, Response, Status};
 
 use std::sync::Arc;
-use tokio::sync::RwLock;
 
 use crate::application::auth_service::AuthService;
 use crate::application::blog_service::BlogService;
@@ -11,31 +10,6 @@ use crate::domain::post::Post;
 pub mod blog {
     tonic::include_proto!("blog");
 }
-
-/*#[derive(Clone)]
-pub struct ServerState {
-    // Here you can add shared state, e.g., database connection pool
-    pub blog_service: Arc<RwLock<BlogService>>,
-}
-
-impl ServerState {
-    pub fn new(blog_service: Arc<RwLock<BlogService>>) -> Self {
-        Self { blog_service }
-    }
-}
-
-#[derive(Clone)]
-pub struct BlogServiceImpl {
-    state: ServerState
-}
-
-impl BlogServiceImpl {
-    pub fn new(service: Arc<RwLock<BlogService>>) -> Self {
-        Self {
-            state: ServerState::new(service)
-        }
-    }
-}*/
 
 #[derive(Clone)]
 pub struct BlogGrpcService {
@@ -64,7 +38,7 @@ impl BlogGrpcService {
         }
     }
 
-    fn get_auth_token(request: &Request<()>) -> Result<String, Status> {
+    fn get_auth_token<T>(request: &Request<T>) -> Result<String, Status> {
         request
             .metadata()
             .get("authorization")
@@ -90,27 +64,73 @@ impl blog::blog_service_server::BlogService for BlogGrpcService {
         &self,
         request: Request<blog::RegisterRequest>,
     ) -> Result<Response<blog::AuthResponse>, Status> {
-        todo!("Implement register")
+
+        let request = request.into_inner();
+
+        let (user, token) = self.auth_service
+        .register(
+            request.username.clone(),
+            request.email.clone(),
+            request.password.clone(),
+        )
+        .await?;
+
+        let response = blog::AuthResponse {
+            success: true,
+            message: "User registered".to_string(),
+            token,
+            user: Some(blog::User {
+                id: user.id,
+                username: user.username.clone(),
+                email: user.email.clone(),
+                created_at: user.created_at.clone(),
+            }),
+        };
+
+        Ok(Response::new(response))
     }
 
     async fn login(
         &self,
         request: Request<blog::LoginRequest>,
     ) -> Result<Response<blog::AuthResponse>, Status> {
-        todo!("Implement login")
+        let request = request.into_inner();
+
+        let (user, token) = self.auth_service
+        .login(request.username.clone(), request.password.clone())
+        .await?;
+
+        let response = blog::AuthResponse {
+            success: true,
+            message: "User logged in".to_string(),
+            token,
+            user: Some(blog::User {
+                id: user.id,
+                username: user.username.clone(),
+                email: user.email.clone(),
+                created_at: user.created_at.clone(),
+            }),
+        };
+
+        Ok(Response::new(response))
     }
 
     async fn create_post(
         &self,
         request: Request<blog::CreatePostRequest>,
     ) -> Result<Response<blog::PostResponse>, Status> {
-        let request = request.into_inner();
 
-        let auth_id = 1;
+        //let token = request.metadata().get("authorization");
+
+        let auth_token = Self::get_auth_token(&request)?;
+
+        let claims = self.auth_service.verify_token(&auth_token)?;
+
+        let request = request.into_inner();
 
         let post = self
             .blog_service
-            .create_post(request.title, request.content, auth_id)
+            .create_post(request.title, request.content, claims.user_id)
             .await?;
 
         let grpc_post = Self::post_to_grpc(&post);
@@ -128,13 +148,16 @@ impl blog::blog_service_server::BlogService for BlogGrpcService {
         &self,
         request: Request<blog::UpdatePostRequest>,
     ) -> Result<Response<blog::PostResponse>, Status> {
-        let request = request.into_inner();
 
-        let auth_id = 1;
+        let auth_token = Self::get_auth_token(&request)?;
+
+        let claims = self.auth_service.verify_token(&auth_token)?;
+
+        let request = request.into_inner();
 
         let post = self
             .blog_service
-            .update_post(request.id, request.title, request.content, auth_id)
+            .update_post(request.id, request.title, request.content, claims.user_id)
             .await?;
 
         let grpc_post = Self::post_to_grpc(&post);
@@ -152,13 +175,13 @@ impl blog::blog_service_server::BlogService for BlogGrpcService {
         &self,
         request: Request<blog::DeletePostRequest>,
     ) -> Result<Response<blog::DeletePostResponse>, Status> {
-        //todo!("Implement delete_post")
+        let auth_token = Self::get_auth_token(&request)?;
+
+        let claims = self.auth_service.verify_token(&auth_token)?;
 
         let request = request.into_inner();
 
-        let auth_id = 1;
-
-        let r = self.blog_service.delete_post(request.id, auth_id).await?;
+        let r = self.blog_service.delete_post(request.id, claims.user_id).await?;
 
         let response = blog::DeletePostResponse {
             success: r,
@@ -176,7 +199,6 @@ impl blog::blog_service_server::BlogService for BlogGrpcService {
         &self,
         request: Request<blog::GetPostRequest>,
     ) -> Result<Response<blog::PostResponse>, Status> {
-        //todo!("Implement get_post")
 
         let request = request.into_inner();
 

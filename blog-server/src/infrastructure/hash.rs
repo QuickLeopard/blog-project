@@ -2,7 +2,7 @@ use argon2::{
     Argon2,
     password_hash::{PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
 };
-use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation, decode, encode};
+
 use rand_core::OsRng;
 
 pub fn hash_password(password: &str) -> Result<String, argon2::password_hash::Error> {
