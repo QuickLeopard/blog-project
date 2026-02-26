@@ -1,9 +1,11 @@
 //use crate::blog::blog_service_client::Client;
-use crate::blog_client::*;
 use tonic::Request;
+
+use tonic::metadata::MetadataValue;
 
 use crate::post::{ListPostsResponse, Post};
 use crate::traits::BlogService;
+use crate::user::{LoginUserResponse, User};
 
 pub mod blog {
     tonic::include_proto!("blog");
@@ -22,6 +24,162 @@ impl BlogGrpcClient {
 
 #[tonic::async_trait]
 impl BlogService for BlogGrpcClient {
+    async fn login_user(
+        &self,
+        username: String,
+        password: String,
+    ) -> anyhow::Result<LoginUserResponse> {
+        let mut client = self.client.clone();
+        let request = Request::new(blog::LoginRequest {
+            username: username.clone(),
+            password,
+        });
+
+        let response = client.login(request).await?.into_inner();
+
+        if !response.success {
+            return Err(anyhow::anyhow!("{}", response.message));
+        }
+
+        let user = response
+            .user
+            .ok_or_else(|| anyhow::anyhow!("User not provided in response"))?;
+
+        Ok(LoginUserResponse {
+            user: User {
+                id: user.id,
+                username,
+                email: user.email,
+                created_at: user.created_at,
+            },
+            token: response.token,
+        })
+    }
+    async fn register_user(
+        &self,
+        username: String,
+        email: String,
+        password: String,
+    ) -> anyhow::Result<LoginUserResponse> {
+        let mut client = self.client.clone();
+        let request = Request::new(blog::RegisterRequest {
+            username: username.clone(),
+            email: email.clone(),
+            password: password.clone(),
+        });
+
+        let response = client.register(request).await?.into_inner();
+
+        if !response.success {
+            return Err(anyhow::anyhow!("{}", response.message));
+        }
+
+        let user = response
+            .user
+            .ok_or_else(|| anyhow::anyhow!("User not provided in response"))?;
+
+        Ok(LoginUserResponse {
+            user: User {
+                id: user.id,
+                username,
+                email,
+                created_at: user.created_at,
+            },
+            token: response.token,
+        })
+    }
+
+    async fn create_post(
+        &self,
+        title: String,
+        content: String,
+        token: String,
+    ) -> anyhow::Result<Post> {
+        let mut client = self.client.clone();
+        let mut request = Request::new(blog::CreatePostRequest {
+            title,
+            content,
+        });
+
+        // Add token to metadata
+        let token_value = MetadataValue::try_from(format!("Bearer {}", token))?;
+        request.metadata_mut().insert("authorization", token_value);
+
+        let response = client.create_post(request).await?.into_inner();
+
+        if !response.success {
+            return Err(anyhow::anyhow!("{}", response.message));
+        }
+
+        let post = response
+            .post
+            .ok_or_else(|| anyhow::anyhow!("Post not provided in response"))?;
+
+        Ok(Post {
+            id: post.id,
+            title: post.title,
+            content: post.content,
+            author_id: post.author_id,
+            created_at: post.created_at,
+            updated_at: post.updated_at,
+        })
+    }
+
+    async fn delete(&self, id: i64, token: String) -> anyhow::Result<bool> {
+        let mut client = self.client.clone();
+        let mut request = Request::new(blog::DeletePostRequest { id });
+
+        // Add token to metadata
+        let token_value = MetadataValue::try_from(format!("Bearer {}", token))?;
+        request.metadata_mut().insert("authorization", token_value);
+
+        let response = client.delete_post(request).await?.into_inner();
+
+        if !response.success {
+            return Err(anyhow::anyhow!("{}", response.message));
+        }
+
+        Ok(true)
+    }
+
+    async fn update(
+        &self,
+        id: i64,
+        title: String,
+        content: String,
+        token: String,
+    ) -> anyhow::Result<Post> {
+        let mut client = self.client.clone();
+        let mut request = Request::new(blog::UpdatePostRequest {
+            id,
+            title,
+            content,
+        });
+
+        // Add token to metadata
+        let token_value = MetadataValue::try_from(format!("Bearer {}", token))?;
+        request.metadata_mut().insert("authorization", token_value);
+
+        let response = client.update_post(request).await?.into_inner();
+
+        if !response.success {
+            return Err(anyhow::anyhow!("{}", response.message));
+        }
+
+        let post = response
+            .post
+            .ok_or_else(|| anyhow::anyhow!("Post not provided in response"))?;
+
+        Ok(Post {
+            id: post.id,
+            title: post.title,
+            content: post.content,
+            author_id: post.author_id,
+            created_at: post.created_at,
+            updated_at: post.updated_at,
+        })
+    }
+
     async fn get_post(&self, id: i64) -> anyhow::Result<Post> {
         let mut client = self.client.clone();
         client

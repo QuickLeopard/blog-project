@@ -30,7 +30,7 @@ impl Post {
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize)]
 pub struct CreatePostRequest {
     pub title: String,
     pub content: String,
