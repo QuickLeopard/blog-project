@@ -33,6 +33,7 @@ use presentation::http_public;
 use presentation::grpc_service::BlogGrpcService; //, ServerState};
 use presentation::grpc_service::blog::blog_service_server::BlogServiceServer;
 
+use crate::data::db_user_repository::DbUserRepository;
 use crate::infrastructure::jwt::JwtService;
 
 pub mod blog {
@@ -91,7 +92,8 @@ async fn main() -> anyhow::Result<()> {
     let auth_service = Arc::new(
         //RwLock::new(
         AuthService::new(
-            Arc::new(InMemoryUserRepository::new()),
+            //Arc::new(InMemoryUserRepository::new()),
+            Arc::new(DbUserRepository::new(pool.clone())),
             JwtService::new(&secret_token),
         ), //)
     );
