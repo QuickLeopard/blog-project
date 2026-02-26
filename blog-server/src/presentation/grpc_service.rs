@@ -243,6 +243,8 @@ impl blog::blog_service_server::BlogService for BlogGrpcService {
         let response = blog::ListPostsResponse {
             posts: posts.iter().map(|p| Self::post_to_grpc(p)).collect(),
             total: posts.len() as i32,
+            offset: offset as i32,
+            limit: limit as i32,
         };
 
         Ok(Response::new(response))

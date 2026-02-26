@@ -97,4 +97,6 @@ message ListPostsRequest {
 message ListPostsResponse {
   repeated Post posts = 1;
   int32 total = 2;
+  int32 offset = 3;
+  int32 limit = 4;
 }

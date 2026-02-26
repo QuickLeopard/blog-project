@@ -2,6 +2,7 @@ use actix_web::{HttpResponse, Responder, Scope, get, post, web};
 use serde::Deserialize;
 
 use crate::domain::error::DomainError;
+use crate::domain::post::ListPostsResponse;
 use crate::domain::user::{LoginRequest, LoginUserResponse, RegisterUserRequest};
 use crate::infrastructure::app_state::AppState;
 
@@ -89,10 +90,12 @@ pub async fn get_posts(
 
     let posts = blog_service.get_posts(offset as i32, limit as i32).await?;
 
-    Ok(HttpResponse::Ok().json(serde_json::json!({
-    "posts": posts,
-    "total": posts.len(),
-    "offset": offset,
-    "limit": limit
-    })))
+    let list_posts_response = ListPostsResponse {
+        posts: posts.clone(),
+        total: posts.len() as i32,
+        offset: offset as i32,
+        limit: limit as i32,
+    };
+
+    Ok(HttpResponse::Ok().json(list_posts_response))
 }

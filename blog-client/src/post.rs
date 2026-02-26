@@ -41,3 +41,11 @@ pub struct UpdatePostRequest {
     pub title: String,
     pub content: String,
 }
+
+#[derive(Debug, Deserialize)]
+pub struct ListPostsResponse {
+    pub posts: Vec<Post>,
+    pub total: i32,
+    pub offset: i32,
+    pub limit: i32,
+}
