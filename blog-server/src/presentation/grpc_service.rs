@@ -24,7 +24,7 @@ fn datetime_to_timestamp(dt: DateTime<Utc>) -> Timestamp {
 #[derive(Clone)]
 pub struct BlogGrpcService {
     auth_service: Arc<AuthService>,
-    blog_service: Arc<BlogService>, 
+    blog_service: Arc<BlogService>,
 }
 
 impl BlogGrpcService {

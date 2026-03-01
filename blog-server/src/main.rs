@@ -88,7 +88,7 @@ async fn main() -> anyhow::Result<()> {
     let grpc_address = "0.0.0.0:50051".parse()?;
 
     let secret_token = std::env::var("SECRET_TOKEN").expect("SECRET_TOKEN must be set");
-        //.unwrap_or_else(|_| "wt35y4urtjfgjhfgjfjfgjgfjfgjrtj454e5634tafazf".to_string());
+    //.unwrap_or_else(|_| "wt35y4urtjfgjhfgjfjfgjgfjfgjrtj454e5634tafazf".to_string());
 
     //let auth_middleware = HttpAuthentication::bearer(jwt_validator);
 

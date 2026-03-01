@@ -32,6 +32,23 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  blog-frontend:
+    build:
+      context: .
+      dockerfile: ./blog-frontend/Dockerfile
+    container_name: blog-frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      blog-server:
+        condition: service_healthy
+    #volumes: []  # no runtime volumes needed
 
 volumes:
   postgres_data:

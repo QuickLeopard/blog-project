@@ -2,7 +2,7 @@ use async_trait::async_trait;
 
 use reqwest;
 
-use crate::post::{CreatePostRequest, UpdatePostRequest, ListPostsResponse, Post};
+use crate::post::{CreatePostRequest, ListPostsResponse, Post, UpdatePostRequest};
 use crate::traits::BlogService;
 use crate::user::{LoginUserResponse, RegisterUserRequest};
 

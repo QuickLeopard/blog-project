@@ -1,7 +1,7 @@
 //use crate::blog::blog_service_client::Client;
 use chrono::{DateTime, Utc};
-use tonic::Request;
 use prost_types::Timestamp;
+use tonic::Request;
 
 use tonic::metadata::MetadataValue;
 
@@ -18,8 +18,7 @@ pub mod blog {
 // Convert Option<Timestamp> to DateTime<Utc>
 fn timestamp_to_datetime(ts: Option<prost_types::Timestamp>) -> anyhow::Result<DateTime<Utc>> {
     let ts = ts.context("Timestamp field is missing")?;
-    DateTime::from_timestamp(ts.seconds, ts.nanos as u32)
-        .context("Invalid timestamp value")
+    DateTime::from_timestamp(ts.seconds, ts.nanos as u32).context("Invalid timestamp value")
 }
 
 pub struct BlogGrpcClient {
@@ -211,7 +210,7 @@ impl BlogService for BlogGrpcClient {
             limit: Some(limit),
         });
         let response = client.list_posts(request).await?.into_inner();
-    
+
         // Map to Result<Post>, then collect into Result<Vec<Post>>
         response
             .posts

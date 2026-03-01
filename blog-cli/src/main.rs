@@ -55,9 +55,7 @@ enum Commands {
         limit: i32,
     },
     #[command(alias = "get")]
-    GetPost {
-        id: i64,
-    },
+    GetPost { id: i64 },
     //CountPosts,
 }
 
@@ -196,10 +194,9 @@ async fn main() -> Result<()> {
         }
         Commands::GetPost { id } => {
             get_post(&client, id).await?;
-        }
-        //Commands::CountPosts => {
-        //    count_posts(&client).await?;
-        //}
+        } //Commands::CountPosts => {
+          //    count_posts(&client).await?;
+          //}
     }
 
     Ok(())

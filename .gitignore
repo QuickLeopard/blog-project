@@ -11,3 +11,5 @@ Cargo.lock
 *.log
 */ISSUES.md
 *.bin
+dist/
+*.wasm

@@ -57,19 +57,21 @@ impl PostRepository for DBPostRepository {
     }
 
     async fn find_by_id(&self, id: i64) -> Result<Post, DomainError> {
-        let row = sqlx::query(r#"
+        let row = sqlx::query(
+            r#"
             SELECT id, title, content, author_id, created_at, updated_at
             FROM posts WHERE id = $1
-        "#)
+        "#,
+        )
         .bind(id)
         .fetch_one(&self.pool)
         .await
         .map_err(|e| match e {
             sqlx::Error::RowNotFound => DomainError::PostNotFound,
             _ => DomainError::DatabaseError(e),
-        })?; 
+        })?;
 
-        let post = map_row(row)?; 
+        let post = map_row(row)?;
         debug!(post_id = post.id, "post fetched by id");
         Ok(post)
     }
@@ -98,7 +100,7 @@ impl PostRepository for DBPostRepository {
         .map_err(|e| match e {
             sqlx::Error::RowNotFound => DomainError::PostNotFound,
             _ => DomainError::DatabaseError(e),
-        })?; 
+        })?;
 
         let post = map_row(row)?;
         info!(post_id = post.id, "post updated");
@@ -120,7 +122,7 @@ impl PostRepository for DBPostRepository {
         .map_err(|e| match e {
             sqlx::Error::RowNotFound => DomainError::PostNotFound,
             _ => DomainError::DatabaseError(e),
-        })?; 
+        })?;
 
         let post = map_row(row)?;
         info!(post_id = post.id, "post deleted");

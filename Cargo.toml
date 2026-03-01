@@ -4,6 +4,7 @@ members = [
     "blog-client",
     "blog-cli",
     "blog-wasm",
+    "blog-frontend",
 ]
 resolver = "2"
 
@@ -29,7 +30,7 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 thiserror = "1.0"
 anyhow = "1.0"
-chrono = { version = "0.4", features = ["serde"] }
+chrono = { version = "0.4", features = ["serde", "wasmbind"] }
 async-trait = "0.1"
 
 
