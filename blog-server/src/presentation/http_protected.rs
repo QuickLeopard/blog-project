@@ -37,6 +37,10 @@ pub async fn delete_post(
 ) -> Result<impl Responder, DomainError> {
     let post_id = path.into_inner();
 
+    if post_id <= 0 {
+        return Err(DomainError::PostNotFound);
+    }
+
     let blog_service = state.blog_service.clone(); //.write().await;
 
     blog_service.delete_post(post_id, auth_user.user_id).await?;
@@ -52,6 +56,10 @@ pub async fn update_post(
     auth_user: AuthenticatedUser,
 ) -> Result<impl Responder, DomainError> {
     let post_id = path.into_inner();
+
+    if post_id <= 0 {
+        return Err(DomainError::PostNotFound);
+    }
 
     let blog_service = state.blog_service.clone(); //.write().await;
 

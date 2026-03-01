@@ -1,3 +1,4 @@
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -7,7 +8,7 @@ pub struct User {
     pub email: String,
     #[serde(skip_serializing)]
     pub password_hash: String,
-    pub created_at: String,
+    pub created_at: DateTime<Utc>,
 }
 
 impl User {
@@ -16,7 +17,7 @@ impl User {
         username: String,
         email: String,
         password_hash: String,
-        created_at: String,
+        created_at: DateTime<Utc>,
     ) -> User {
         Self {
             id,

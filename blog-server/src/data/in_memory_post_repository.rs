@@ -44,8 +44,8 @@ impl PostRepository for InMemoryPostRepository {
             title,
             content,
             author_id,
-            created_at: timestamp.to_string(),
-            updated_at: timestamp.to_string(),
+            created_at: chrono::Utc::now(),
+            updated_at: chrono::Utc::now(),
         };
 
         println!("Created post: {:?}", post);
@@ -81,7 +81,7 @@ impl PostRepository for InMemoryPostRepository {
         {
             post.title = title;
             post.content = content;
-            post.updated_at = chrono::Utc::now().to_rfc3339().to_string();
+            post.updated_at = chrono::Utc::now();
             Ok(post.clone())
         } else {
             Err(DomainError::PostNotFound)

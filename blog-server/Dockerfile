@@ -38,6 +38,6 @@ WORKDIR /app
 COPY --from=builder /workspace/target/release/blog-server /app/blog-server
 COPY --from=builder /workspace/blog-server/migrations /app/migrations
 
-EXPOSE 8080
+EXPOSE 3000
 
 CMD ["/app/blog-server"]

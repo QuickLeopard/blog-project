@@ -58,7 +58,7 @@ enum Commands {
     GetPost {
         id: i64,
     },
-    CountPosts,
+    //CountPosts,
 }
 
 #[derive(Parser, Debug)]
@@ -107,11 +107,11 @@ async fn get_post(client: &BlogClient, id: i64) -> Result<()> {
     Ok(())
 }
 
-async fn count_posts(client: &BlogClient) -> Result<()> {
+/*async fn count_posts(client: &BlogClient) -> Result<()> {
     let count = client.count_posts().await?;
     println!("Total posts: {}", count);
     Ok(())
-}
+}*/
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -170,15 +170,26 @@ async fn main() -> Result<()> {
             token,
         } => {
             let post = client.create_post(title, content, token).await?;
-            println!("Created post with ID: {}, Title: \"{}\", Content: \"{}\"", post.id, post.title, post.content);
+            println!(
+                "Created post with ID: {}, Title: \"{}\", Content: \"{}\"",
+                post.id, post.title, post.content
+            );
         }
         Commands::DeletePost { id, token } => {
             client.delete_post(id, token).await?;
             println!("Deleted post with ID: {}", id);
         }
-        Commands::UpdatePost { id, title, content, token } => {
+        Commands::UpdatePost {
+            id,
+            title,
+            content,
+            token,
+        } => {
             let post = client.update_post(id, title, content, token).await?;
-            println!("Updated post with ID: {}, Title: \"{}\", Content: \"{}\"", post.id, post.title, post.content);
+            println!(
+                "Updated post with ID: {}, Title: \"{}\", Content: \"{}\"",
+                post.id, post.title, post.content
+            );
         }
         Commands::ListPosts { offset, limit } => {
             get_posts(&client, offset, limit).await?;
@@ -186,9 +197,9 @@ async fn main() -> Result<()> {
         Commands::GetPost { id } => {
             get_post(&client, id).await?;
         }
-        Commands::CountPosts => {
-            count_posts(&client).await?;
-        }
+        //Commands::CountPosts => {
+        //    count_posts(&client).await?;
+        //}
     }
 
     Ok(())

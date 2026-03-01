@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package blog;
 
+import "google/protobuf/timestamp.proto";
+
 service BlogService {
   rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
   rpc Register(RegisterRequest) returns (AuthResponse);
@@ -43,7 +45,7 @@ message User {
   int64 id = 1;
   string username = 2;
   string email = 3;
-  string created_at = 4;
+  google.protobuf.Timestamp created_at = 4;
 }
 
 message CreatePostRequest {
@@ -76,8 +78,8 @@ message Post {
   string content = 3;
   int64 author_id = 4;
   string author_username = 5;
-  string created_at = 6;
-  string updated_at = 7;
+  google.protobuf.Timestamp created_at = 6;
+  google.protobuf.Timestamp updated_at = 7;
 }
 
 message PostResponse {

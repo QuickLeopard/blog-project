@@ -31,8 +31,8 @@ use presentation::http_public;
 //use presentation::middleware::jwt_validator;
 
 use presentation::grpc_service::BlogGrpcService; //, ServerState};
-use presentation::grpc_service::blog::blog_service_server::BlogServiceServer;
 
+use crate::data::db_post_repository::DBPostRepository;
 use crate::data::db_user_repository::DbUserRepository;
 use crate::infrastructure::jwt::JwtService;
 
@@ -41,12 +41,14 @@ pub mod blog {
     pub const FILE_DESCRIPTOR_SET: &[u8] = tonic::include_file_descriptor_set!("blog_descriptor");
 }
 
+use blog::blog_service_server::BlogServiceServer;
+
 fn build_cors(config: &AppConfig) -> Cors {
     let mut cors = Cors::default()
         .allowed_methods(vec!["GET", "POST", "PUT", "DELETE", "OPTIONS"])
         .allow_any_header()
         .allow_any_origin()
-        .supports_credentials()
+        //.supports_credentials()
         .max_age(3600);
 
     /*for origin in &config.cors_origins {
@@ -56,7 +58,8 @@ fn build_cors(config: &AppConfig) -> Cors {
     cors
 }
 
-#[actix_web::main]
+//#[actix_web::main]
+#[tokio::main]
 async fn main() -> anyhow::Result<()> {
     //env::set_var("RUST_LOG", "debug");
     //env_logger::init();
@@ -84,8 +87,8 @@ async fn main() -> anyhow::Result<()> {
     let http_address = "0.0.0.0:3000";
     let grpc_address = "0.0.0.0:50051".parse()?;
 
-    let secret_token = std::env::var("SECRET_TOKEN")
-        .unwrap_or_else(|_| "wt35y4urtjfgjhfgjfjfgjgfjfgjrtj454e5634tafazf".to_string());
+    let secret_token = std::env::var("SECRET_TOKEN").expect("SECRET_TOKEN must be set");
+        //.unwrap_or_else(|_| "wt35y4urtjfgjhfgjfjfgjgfjfgjrtj454e5634tafazf".to_string());
 
     //let auth_middleware = HttpAuthentication::bearer(jwt_validator);
 
@@ -100,7 +103,10 @@ async fn main() -> anyhow::Result<()> {
 
     let blog_service = Arc::new(
         //RwLock::new(
-        BlogService::new(Arc::new(InMemoryPostRepository::new())), //)
+        BlogService::new(
+            Arc::new(DBPostRepository::new(pool.clone())),
+            //Arc::new(InMemoryPostRepository::new())
+        ), //)
     );
 
     let app_state = web::Data::new(AppState {

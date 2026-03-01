@@ -28,7 +28,7 @@ impl JwtService {
         user_name: &str,
     ) -> Result<String, jsonwebtoken::errors::Error> {
         let claims = Claims {
-            user_id: user_id,
+            user_id,
             user_name: user_name.to_string(),
             exp: chrono::Utc::now()
                 .checked_add_signed(chrono::Duration::hours(1))

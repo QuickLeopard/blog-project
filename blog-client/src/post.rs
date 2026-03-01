@@ -1,3 +1,4 @@
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -6,8 +7,8 @@ pub struct Post {
     pub title: String,
     pub content: String,
     pub author_id: i64,
-    pub created_at: String,
-    pub updated_at: String,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 }
 
 impl Post {
@@ -16,8 +17,8 @@ impl Post {
         title: String,
         content: String,
         author_id: i64,
-        created_at: String,
-        updated_at: String,
+        created_at: DateTime<Utc>,
+        updated_at: DateTime<Utc>,
     ) -> Self {
         Self {
             id,
@@ -36,7 +37,7 @@ pub struct CreatePostRequest {
     pub content: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize)]
 pub struct UpdatePostRequest {
     pub title: String,
     pub content: String,

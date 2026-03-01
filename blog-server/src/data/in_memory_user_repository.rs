@@ -41,7 +41,7 @@ impl UserRepository for InMemoryUserRepository {
             ));
         }
 
-        let timestamp = chrono::Utc::now().to_rfc3339();
+        let timestamp = chrono::Utc::now();
 
         let user_id = {
             let mut id_lock = self.next_user_id.write().await;

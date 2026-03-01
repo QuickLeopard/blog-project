@@ -2,7 +2,7 @@ use async_trait::async_trait;
 
 use reqwest;
 
-use crate::post::{CreatePostRequest, ListPostsResponse, Post};
+use crate::post::{CreatePostRequest, UpdatePostRequest, ListPostsResponse, Post};
 use crate::traits::BlogService;
 use crate::user::{LoginUserResponse, RegisterUserRequest};
 
@@ -106,7 +106,7 @@ impl BlogService for HttpClient {
         content: String,
         token: String,
     ) -> anyhow::Result<Post> {
-        let post = CreatePostRequest { title, content };
+        let post = UpdatePostRequest { title, content };
 
         let response = self
             .client
@@ -153,8 +153,8 @@ impl BlogService for HttpClient {
         //Ok(vec![]) // Placeholder
     }
 
-    async fn count_posts(&self) -> anyhow::Result<i32> {
+    /*async fn count_posts(&self) -> anyhow::Result<i64> {
         todo!("Implement HTTP client to count posts from the server")
         //Ok(0) // Placeholder
-    }
+    }*/
 }

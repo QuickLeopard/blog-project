@@ -1,7 +1,11 @@
 //use crate::blog::blog_service_client::Client;
+use chrono::{DateTime, Utc};
 use tonic::Request;
+use prost_types::Timestamp;
 
 use tonic::metadata::MetadataValue;
+
+use anyhow::Context;
 
 use crate::post::{ListPostsResponse, Post};
 use crate::traits::BlogService;
@@ -9,6 +13,13 @@ use crate::user::{LoginUserResponse, User};
 
 pub mod blog {
     tonic::include_proto!("blog");
+}
+
+// Convert Option<Timestamp> to DateTime<Utc>
+fn timestamp_to_datetime(ts: Option<prost_types::Timestamp>) -> anyhow::Result<DateTime<Utc>> {
+    let ts = ts.context("Timestamp field is missing")?;
+    DateTime::from_timestamp(ts.seconds, ts.nanos as u32)
+        .context("Invalid timestamp value")
 }
 
 pub struct BlogGrpcClient {
@@ -50,7 +61,7 @@ impl BlogService for BlogGrpcClient {
                 id: user.id,
                 username,
                 email: user.email,
-                created_at: user.created_at,
+                created_at: timestamp_to_datetime(user.created_at)?,
             },
             token: response.token,
         })
@@ -83,7 +94,7 @@ impl BlogService for BlogGrpcClient {
                 id: user.id,
                 username,
                 email,
-                created_at: user.created_at,
+                created_at: timestamp_to_datetime(user.created_at)?,
             },
             token: response.token,
         })
@@ -96,10 +107,7 @@ impl BlogService for BlogGrpcClient {
         token: String,
     ) -> anyhow::Result<Post> {
         let mut client = self.client.clone();
-        let mut request = Request::new(blog::CreatePostRequest {
-            title,
-            content,
-        });
+        let mut request = Request::new(blog::CreatePostRequest { title, content });
 
         // Add token to metadata
         let token_value = MetadataValue::try_from(format!("Bearer {}", token))?;
@@ -120,8 +128,8 @@ impl BlogService for BlogGrpcClient {
             title: post.title,
             content: post.content,
             author_id: post.author_id,
-            created_at: post.created_at,
-            updated_at: post.updated_at,
+            created_at: timestamp_to_datetime(post.created_at)?,
+            updated_at: timestamp_to_datetime(post.updated_at)?,
         })
     }
 
@@ -150,11 +158,7 @@ impl BlogService for BlogGrpcClient {
         token: String,
     ) -> anyhow::Result<Post> {
         let mut client = self.client.clone();
-        let mut request = Request::new(blog::UpdatePostRequest {
-            id,
-            title,
-            content,
-        });
+        let mut request = Request::new(blog::UpdatePostRequest { id, title, content });
 
         // Add token to metadata
         let token_value = MetadataValue::try_from(format!("Bearer {}", token))?;
@@ -175,8 +179,8 @@ impl BlogService for BlogGrpcClient {
             title: post.title,
             content: post.content,
             author_id: post.author_id,
-            created_at: post.created_at,
-            updated_at: post.updated_at,
+            created_at: timestamp_to_datetime(post.created_at)?,
+            updated_at: timestamp_to_datetime(post.updated_at)?,
         })
     }
 
@@ -188,13 +192,15 @@ impl BlogService for BlogGrpcClient {
             .into_inner()
             .post
             .ok_or_else(|| anyhow::anyhow!("Post not found"))
-            .map(|post| Post {
-                id: post.id,
-                title: post.title,
-                content: post.content,
-                author_id: post.author_id,
-                created_at: post.created_at,
-                updated_at: post.updated_at,
+            .and_then(|post| {
+                Ok(Post {
+                    id: post.id,
+                    title: post.title,
+                    content: post.content,
+                    author_id: post.author_id,
+                    created_at: timestamp_to_datetime(post.created_at)?,
+                    updated_at: timestamp_to_datetime(post.updated_at)?,
+                })
             })
     }
 
@@ -205,21 +211,28 @@ impl BlogService for BlogGrpcClient {
             limit: Some(limit),
         });
         let response = client.list_posts(request).await?.into_inner();
-        Ok(response
+    
+        // Map to Result<Post>, then collect into Result<Vec<Post>>
+        response
             .posts
             .into_iter()
-            .map(|post| Post {
-                id: post.id,
-                title: post.title,
-                content: post.content,
-                author_id: post.author_id,
-                created_at: post.created_at,
-                updated_at: post.updated_at,
+            .map(|post| {
+                Ok(Post {
+                    id: post.id,
+                    title: post.title,
+                    content: post.content,
+                    author_id: post.author_id,
+                    created_at: timestamp_to_datetime(post.created_at)?,
+                    updated_at: timestamp_to_datetime(post.updated_at)?,
+                })
             })
-            .collect())
+            .collect::<anyhow::Result<Vec<_>>>()
     }
 
-    async fn count_posts(&self) -> anyhow::Result<i32> {
-        todo!("Implement gRPC client to count posts from the server")
-    }
+    /*async fn count_posts(&self) -> anyhow::Result<i64> {
+        let mut client = self.client.clone();
+        let request = Request::new(blog::CountPostsRequest {});
+        let response = client.count_posts(request).await?.into_inner();
+        Ok(response.count)
+    }*/
 }

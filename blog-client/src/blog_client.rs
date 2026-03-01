@@ -1,4 +1,3 @@
-
 use crate::post::Post;
 use crate::traits::BlogService;
 
@@ -62,7 +61,7 @@ impl BlogClient {
         self.transport.get_posts(offset, limit).await
     }
 
-    pub async fn count_posts(&self) -> anyhow::Result<i32> {
+    /*pub async fn count_posts(&self) -> anyhow::Result<i64> {
         self.transport.count_posts().await
-    }
+    }*/
 }

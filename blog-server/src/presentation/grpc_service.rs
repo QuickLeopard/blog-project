@@ -1,20 +1,30 @@
+use chrono::{DateTime, Utc};
+use prost_types::Timestamp;
 use tonic::{Request, Response, Status};
 
 use std::sync::Arc;
+
+use tracing::{debug, info};
 
 use crate::application::auth_service::AuthService;
 use crate::application::blog_service::BlogService;
 
 use crate::domain::post::Post;
 
-pub mod blog {
-    tonic::include_proto!("blog");
+use crate::blog;
+
+// Convert DateTime<Utc> to Timestamp
+fn datetime_to_timestamp(dt: DateTime<Utc>) -> Timestamp {
+    Timestamp {
+        seconds: dt.timestamp(),
+        nanos: dt.timestamp_subsec_nanos() as i32,
+    }
 }
 
 #[derive(Clone)]
 pub struct BlogGrpcService {
     auth_service: Arc<AuthService>,
-    blog_service: Arc<BlogService>, // ✅ Just Arc, no RwLock
+    blog_service: Arc<BlogService>, 
 }
 
 impl BlogGrpcService {
@@ -33,8 +43,8 @@ impl BlogGrpcService {
             content: post.content.clone(),
             author_id: post.author_id,
             author_username: String::new(), // TODO: Populate from User Service
-            created_at: post.created_at.clone(),
-            updated_at: post.updated_at.clone(),
+            created_at: Some(datetime_to_timestamp(post.created_at)),
+            updated_at: Some(datetime_to_timestamp(post.updated_at)),
         }
     }
 
@@ -52,7 +62,7 @@ impl BlogGrpcService {
 impl blog::blog_service_server::BlogService for BlogGrpcService {
     async fn health_check(
         &self,
-        request: Request<blog::HealthCheckRequest>,
+        _request: Request<blog::HealthCheckRequest>,
     ) -> Result<Response<blog::HealthCheckResponse>, Status> {
         let response = blog::HealthCheckResponse {
             status: "OK".to_string(),
@@ -83,7 +93,7 @@ impl blog::blog_service_server::BlogService for BlogGrpcService {
                 id: user.id,
                 username: user.username.clone(),
                 email: user.email.clone(),
-                created_at: user.created_at.clone(),
+                created_at: Some(datetime_to_timestamp(user.created_at)),
             }),
         };
 
@@ -109,7 +119,7 @@ impl blog::blog_service_server::BlogService for BlogGrpcService {
                 id: user.id,
                 username: user.username.clone(),
                 email: user.email.clone(),
-                created_at: user.created_at.clone(),
+                created_at: Some(datetime_to_timestamp(user.created_at)),
             }),
         };
 
@@ -232,11 +242,11 @@ impl blog::blog_service_server::BlogService for BlogGrpcService {
             .await
             .unwrap_or_else(|_| vec![]);
 
-        println!("📋 gRPC LIST - count: {}", posts.len());
+        debug!("📋 gRPC LIST - count: {}", posts.len());
 
         //let posts = self.state.blog_service.read().await.get_posts(request.offset, request.limit).await.unwrap_or_else(|_| vec![]);
 
-        println!("📋 gRPC LIST - offset: {}, limit: {}", offset, limit);
+        debug!("📋 gRPC LIST - offset: {}, limit: {}", offset, limit);
 
         //println!("📋 LIST - Repository pointer: {:p}, count: {}", posts, posts.len());
 

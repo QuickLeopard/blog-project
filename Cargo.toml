@@ -18,9 +18,10 @@ wasm-bindgen = "0.2"
 tonic = "0.11"
 tonic-build = "0.11"
 prost = "0.12"
+prost-types = "0.12"
 actix-web = "4"
 actix-web-httpauth = "0.8"
-sqlx = { version = "0.8", features = ["runtime-tokio-rustls", "postgres"] }
+sqlx = { version = "0.8", features = ["runtime-tokio-rustls", "postgres", "chrono"] }
 jsonwebtoken = "9"
 argon2 = "0.5"
 tracing = "0.1"

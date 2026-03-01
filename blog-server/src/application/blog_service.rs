@@ -1,5 +1,7 @@
 use std::sync::Arc;
 
+use tracing::{debug, info};
+
 use crate::data::PostRepository;
 use crate::domain::{error::DomainError, post::Post};
 
@@ -54,10 +56,10 @@ impl BlogService {
             .list(offset as i64, limit as i64)
             .await?;
 
-        println!(
+        /*debug!(
             "🔍 BlogService::get_posts - Service: {:p}",
             self as *const _
-        );
+        );*/
 
         Ok(posts)
     }

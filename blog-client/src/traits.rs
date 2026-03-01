@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 
 use crate::post::Post;
-use crate::user::{LoginUserResponse};
+use crate::user::LoginUserResponse;
 
 #[async_trait]
 pub trait BlogService: Send + Sync {
@@ -39,5 +39,5 @@ pub trait BlogService: Send + Sync {
     ) -> anyhow::Result<LoginUserResponse>;
     async fn get_post(&self, id: i64) -> anyhow::Result<Post>;
     async fn get_posts(&self, offset: i32, limit: i32) -> anyhow::Result<Vec<Post>>;
-    async fn count_posts(&self) -> anyhow::Result<i32>;
+    //async fn count_posts(&self) -> anyhow::Result<i64>;
 }

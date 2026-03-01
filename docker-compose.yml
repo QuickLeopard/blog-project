@@ -25,6 +25,7 @@ services:
     environment:
       DATABASE_URL: postgres://${POSTGRES_USER:-blog_user}:${POSTGRES_PASSWORD:-blog_password}@postgres:5432/${POSTGRES_DB:-blog}
       RUST_LOG: info
+      SECRET_TOKEN: ${SECRET_TOKEN}
     ports:
       - "3000:3000"
       - "50051:50051"
