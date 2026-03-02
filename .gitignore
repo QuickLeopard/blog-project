@@ -5,6 +5,7 @@ Cargo.lock
 .sqlx/
 .DS_Store
 *.html
+!blog-frontend/index.html
 *.txt
 *.css
 *.js

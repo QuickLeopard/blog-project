@@ -62,6 +62,7 @@ pub fn PostList() -> impl IntoView {
 
                     <div>
                         <button
+                            class="btn btn-primary"
                             on:click=on_prev
                             disabled=move || offset.get() == 0
                         >"Previous"</button>
@@ -69,6 +70,7 @@ pub fn PostList() -> impl IntoView {
                         <span>{move || format!(" Page {} ", offset.get() / limit + 1)}</span>
 
                         <button
+                            class="btn btn-primary"
                             on:click=on_next
                             disabled=move || post_count < limit as usize
                         >"Next"</button>
