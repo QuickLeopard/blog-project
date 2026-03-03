@@ -50,7 +50,7 @@ impl PostRepository for InMemoryPostRepository {
             updated_at: timestamp,
         };
 
-        println!("Created post: {:?}", post);
+        //println!("Created post: {:?}", post);
 
         /*println!(
             "📋 REPO ACCESS - Type: {}, Pointer: {:p}, Count: {}",
@@ -106,7 +106,7 @@ impl PostRepository for InMemoryPostRepository {
         //todo!("Implement list posts")
         let posts = self.posts.read().await;
 
-        println!(
+        /*println!(
             "📋 LIST - Repository pointer: {:p}, count: {}",
             self.posts,
             posts.len()
@@ -115,7 +115,7 @@ impl PostRepository for InMemoryPostRepository {
         println!(
             "📋 REPO ACCESS - Type: create, Pointer: {:p}",
             self.posts.as_ref() as *const _,
-        );
+        );*/
 
         Ok(posts
             .values()

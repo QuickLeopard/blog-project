@@ -15,7 +15,6 @@ COPY Cargo.toml Cargo.lock ./
 COPY blog-frontend/Cargo.toml ./blog-frontend/
 COPY blog-client/Cargo.toml   ./blog-client/
 COPY blog-cli/Cargo.toml      ./blog-cli/
-COPY blog-wasm/Cargo.toml     ./blog-wasm/
 COPY blog-server/Cargo.toml   ./blog-server/
 
 # Copy sources
@@ -31,7 +30,6 @@ COPY blog-server/proto        ./blog-server/proto
 COPY blog-client/proto        ./blog-client/proto
 COPY blog-client/build.rs     ./blog-client/
 COPY blog-cli/src             ./blog-cli/src
-COPY blog-wasm/src            ./blog-wasm/src
 
 # Build from the directory that contains index.html
 WORKDIR /workspace/blog-frontend
