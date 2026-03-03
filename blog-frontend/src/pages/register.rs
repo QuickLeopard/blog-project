@@ -1,38 +1,33 @@
 // src/pages/login.rs
 use leptos::prelude::*;
-use leptos_router::components::A;
 use leptos_router::hooks::use_navigate;
 
-use gloo_storage::Storage;
-
 use crate::api;
-use crate::auth::{use_auth, AuthState};
+use crate::auth::{set_auth, AuthState};
 
 #[component]
-pub fn Login() -> impl IntoView {
+pub fn Register() -> impl IntoView {
     let username = RwSignal::new(String::new());
+    let email = RwSignal::new(String::new());
     let password = RwSignal::new(String::new());
-    let error = RwSignal::new(None::<String>);
+    let error    = RwSignal::new(None::<String>);
 
     let navigate = use_navigate();
-    let auth = use_auth();  // capture while we're in component context
 
-    let login_action = Action::new_local(move |_: &()| {
+    // Action::new_local — takes one closure that owns its inputs
+    let register_action = Action::new_local(move |_: &()| {
         let username = username.get();
+        let email = email.get();
         let password = password.get();
         let navigate = navigate.clone();
-        let auth = auth.clone();   // move into async block
-        let error = error.clone();
 
         async move {
-            match api::login(&username, &password).await {
+            match api::register(&username, &email, &password).await {
                 Ok(resp) => {
-                    let state = AuthState {
+                    set_auth(AuthState {
                         token: resp.token,
-                        user: resp.user,
-                    };
-                    gloo_storage::LocalStorage::set("blog_auth", &state).ok();
-                    auth.set(Some(state));
+                        user:  resp.user,
+                    });
                     error.set(None);
                     navigate("/", Default::default());
                 }
@@ -43,7 +38,7 @@ pub fn Login() -> impl IntoView {
         }
     });
 
-    let pending = login_action.pending();
+    let pending = register_action.pending();
 
     view! {
         <div class="container mt-5" style="max-width: 400px">
@@ -64,6 +59,15 @@ pub fn Login() -> impl IntoView {
                 />
             </div>
             <div class="mb-3">
+                <label class="form-label">"Email"</label>
+                <input
+                    class="form-control"
+                    type="text"
+                    prop:value=move || email.get()
+                    on:input=move |ev| email.set(event_target_value(&ev))
+                />
+            </div>
+            <div class="mb-3">
                 <label class="form-label">"Password"</label>
                 <input
                     class="form-control"
@@ -76,15 +80,15 @@ pub fn Login() -> impl IntoView {
             <button
                 class="btn btn-primary w-100"
                 disabled=move || pending.get()
-                on:click=move |_| { login_action.dispatch(()); }
+                on:click=move |_| { register_action.dispatch(()); }
             >
-                {move || if pending.get() { "Logging in…" } else { "Login" }}
+                {move || if pending.get() { "Registering in…" } else { "Register" }}
             </button>
 
-            <p class="mt-3 text-center">
+            /*<p class="mt-3 text-center">
                 "No account? "
                 <A href="/register">"Register"</A>
-            </p>
+            </p>*/
         </div>
     }
 }

@@ -33,8 +33,8 @@ pub fn App() -> impl IntoView {
                 <Routes fallback=|| "Page not found">
                     <Route path=path!("/")                view=PostList/>
                     <Route path=path!("/login")           view=Login/>
-                    /*<Route path=path!("/register")        view=Register/>
-                    <Route path=path!("/posts/new")       view=PostCreate/>*/
+                    <Route path=path!("/register")        view=Register/>
+                    //<Route path=path!("/posts/new")       view=PostCreate/>
                     <Route path=path!("/posts/:id")       view=PostDetail/>
                     //<Route path=path!("/posts/:id/edit")  view=PostEdit/>
                 </Routes>
