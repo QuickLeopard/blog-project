@@ -24,16 +24,7 @@ pub fn provide_auth_context() {
     provide_context(auth);
 }
 
-// Use inside any component:
+// Use inside any component (must be called within reactive owner):
 pub fn use_auth() -> RwSignal<Option<AuthState>> {
-    // Read the signal from context (panics if called outside of App — which is correct)
     expect_context::<RwSignal<Option<AuthState>>>()
 }
-
-// Call on logout:
-pub fn clear_auth() {
-    // Remove from localStorage
-    LocalStorage::delete(AUTH_KEY);
-    // Clear the signal — navbar, protected pages react immediately
-    use_auth().set(None);
-} // removes from localStorage + sets signal to None

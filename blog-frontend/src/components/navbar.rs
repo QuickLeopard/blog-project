@@ -1,13 +1,13 @@
+use gloo_storage::Storage;
 use leptos::prelude::*;
 use leptos_router::components::A;
 
-use crate::auth::{clear_auth, use_auth};
+use crate::auth::use_auth;
 
 #[component]
 pub fn Navbar() -> impl IntoView {
     let auth = use_auth();
 
-    // Reactive derived signals — re-evaluate whenever auth changes
     let is_logged_in = move || auth.get().is_some();
     let username = move || {
         auth.get()
@@ -16,7 +16,8 @@ pub fn Navbar() -> impl IntoView {
     };
 
     let on_logout = move |_| {
-        clear_auth();
+        gloo_storage::LocalStorage::delete("blog_auth");
+        auth.set(None);
     };
 
     view! {
