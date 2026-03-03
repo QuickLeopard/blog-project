@@ -67,3 +67,9 @@ pub struct ListPostsResponse {
 pub struct DeletePostResponse {
     pub message: String,
 }
+
+// Error response from server: { "error": "...", "status": 401 }
+#[derive(Debug, Clone, Deserialize)]
+pub struct ErrorResponse {
+    pub error: String,
+}

@@ -1,12 +1,9 @@
-// src/pages/login.rs
 use leptos::prelude::*;
 use leptos_router::components::A;
 use leptos_router::hooks::use_navigate;
 
-use gloo_storage::Storage;
-
 use crate::api;
-use crate::auth::{use_auth, AuthState};
+use crate::auth::{set_auth, AuthState};
 
 #[component]
 pub fn Login() -> impl IntoView {
@@ -15,24 +12,20 @@ pub fn Login() -> impl IntoView {
     let error = RwSignal::new(None::<String>);
 
     let navigate = use_navigate();
-    let auth = use_auth();  // capture while we're in component context
 
     let login_action = Action::new_local(move |_: &()| {
         let username = username.get();
         let password = password.get();
         let navigate = navigate.clone();
-        let auth = auth.clone();   // move into async block
         let error = error.clone();
 
         async move {
             match api::login(&username, &password).await {
                 Ok(resp) => {
-                    let state = AuthState {
+                    set_auth(AuthState {
                         token: resp.token,
                         user: resp.user,
-                    };
-                    gloo_storage::LocalStorage::set("blog_auth", &state).ok();
-                    auth.set(Some(state));
+                    });
                     error.set(None);
                     navigate("/", Default::default());
                 }

@@ -89,10 +89,11 @@ pub async fn get_posts(
     let blog_service = state.blog_service.clone();
 
     let posts = blog_service.get_posts(offset as i32, limit as i32).await?;
+    let total = blog_service.count_posts().await? as i32;
 
     let list_posts_response = ListPostsResponse {
-        posts: posts.clone(),
-        total: posts.len() as i32,
+        posts,
+        total,
         offset: offset as i32,
         limit: limit as i32,
     };

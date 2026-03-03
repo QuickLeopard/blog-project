@@ -39,7 +39,8 @@ pub fn PostList() -> impl IntoView {
                                 <div class="alert alert-danger">{err.clone()}</div>
                             }.into_any(),
                             Ok(data) => {
-                                let post_count = data.posts.len();
+                                let total_pages = ((data.total + limit - 1) / limit).max(1);
+                                let is_last_page = move || offset.get() / limit + 1 >= total_pages;
                                 let posts = data.posts.clone();
 
                                 view! {
@@ -73,13 +74,13 @@ pub fn PostList() -> impl IntoView {
                                         >"←"</button>
 
                                         <span class="page-label text-muted">
-                                            {move || format!("Page {}", offset.get() / limit + 1)}
+                                            {move || format!("Page {} / {}", offset.get() / limit + 1, total_pages)}
                                         </span>
 
                                         <button
                                             class="btn btn-outline-secondary btn-sm px-3"
                                             on:click=on_next
-                                            disabled=move || post_count < limit as usize
+                                            disabled=is_last_page
                                         >"→"</button>
                                     </div>
                                 }.into_any()

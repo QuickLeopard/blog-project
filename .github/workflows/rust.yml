@@ -48,7 +48,7 @@ jobs:
           echo "**Found $ISSUE_COUNT issue(s)**" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-          cat clippy.log >> $GITHUB_STEP_SUMMARY
+          grep -vE "^\s*(Compiling|Checking|Finished|Downloaded|Downloading|Fresh|Running|Blocking)" clippy.log >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
         else
           echo "✨ No warnings found - code is clean!" >> $GITHUB_STEP_SUMMARY

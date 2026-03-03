@@ -1,13 +1,12 @@
 //use crate::blog::blog_service_client::Client;
 use chrono::{DateTime, Utc};
-use prost_types::Timestamp;
 use tonic::Request;
 
 use tonic::metadata::MetadataValue;
 
 use anyhow::Context;
 
-use crate::post::{ListPostsResponse, Post};
+use crate::post::Post;
 use crate::traits::BlogService;
 use crate::user::{LoginUserResponse, User};
 

@@ -71,14 +71,11 @@ pub fn PostDetail() -> impl IntoView {
                                                 <div class="meta-author">
                                                     {format!("Author #{}", author_id)}
                                                 </div>
-                                                <div class="meta-timestamps">
-                                                    <span>{format!("Created {}", created)}</span>
-                                                    <span class="meta-sep">"·"</span>
-                                                    <span>{format!("Updated {}", updated)}</span>
-                                                </div>
+                                                <div class="meta-timestamp">{format!("Created {}", created)}</div>
+                                                <div class="meta-timestamp">{format!("Updated {}", updated)}</div>
                                             </div>
 
-                                            <div class="post-content mb-4">{content}</div>
+                                            <div class="post-content mt-4 mb-4">{content}</div>
 
                                             {move || {
                                                 if is_owner() {

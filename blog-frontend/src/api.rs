@@ -4,12 +4,15 @@ use crate::types::*;
 
 const API_BASE: &str = "";
 
-fn map_err<T>(result: Result<T, gloo_net::Error>) -> Result<T, String> {
-    result.map_err(|e| e.to_string())
-}
-
 fn to_err<E: std::fmt::Display>(e: E) -> String {
     e.to_string()
+}
+
+async fn http_error(resp: gloo_net::http::Response) -> String {
+    resp.json::<ErrorResponse>()
+        .await
+        .map(|e| e.error)
+        .unwrap_or_else(|_| format!("HTTP {}", resp.status()))
 }
 
 pub async fn login(username: &str, password: &str) -> Result<LoginUserResponse, String> {
@@ -28,7 +31,7 @@ pub async fn login(username: &str, password: &str) -> Result<LoginUserResponse, 
         .map_err(to_err)?;
 
     if !resp.ok() {
-        return Err(format!("HTTP {}", resp.status()));
+        return Err(http_error(resp).await);
     }
 
     resp.json::<LoginUserResponse>().await.map_err(to_err)
@@ -48,7 +51,7 @@ pub async fn register(
                 email: email.to_string(),
                 password: password.to_string(),
             })
-            .unwrap(),
+            .map_err(to_err)?,
         )
         .map_err(|e: gloo_net::Error| e.to_string())?
         .send()
@@ -56,7 +59,7 @@ pub async fn register(
         .map_err(|e| e.to_string())?;
 
     if !resp.ok() {
-        return Err(format!("HTTP {}", resp.status()));
+        return Err(http_error(resp).await);
     }
 
     resp.json::<LoginUserResponse>()
@@ -75,7 +78,7 @@ pub async fn get_posts(offset: i32, limit: i32) -> Result<ListPostsResponse, Str
     .map_err(|e| e.to_string())?;
 
     if !resp.ok() {
-        return Err(format!("HTTP {}", resp.status()));
+        return Err(http_error(resp).await);
     }
 
     resp.json::<ListPostsResponse>()
@@ -91,7 +94,7 @@ pub async fn get_post(id: i64) -> Result<Post, String> {
         .map_err(|e| e.to_string())?;
 
     if !resp.ok() {
-        return Err(format!("HTTP {}", resp.status()));
+        return Err(http_error(resp).await);
     }
 
     resp.json::<Post>().await.map_err(|e| e.to_string())
@@ -107,7 +110,7 @@ pub async fn create_post(title: &str, content: &str, token: &str) -> Result<Post
                 title: title.to_string(),
                 content: content.to_string(),
             })
-            .unwrap(),
+            .map_err(to_err)?,
         )
         .map_err(|e: gloo_net::Error| e.to_string())?
         .send()
@@ -115,7 +118,7 @@ pub async fn create_post(title: &str, content: &str, token: &str) -> Result<Post
         .map_err(|e| e.to_string())?;
 
     if !resp.ok() {
-        return Err(format!("HTTP {}", resp.status()));
+        return Err(http_error(resp).await);
     }
 
     resp.json::<Post>().await.map_err(|e| e.to_string())
@@ -131,7 +134,7 @@ pub async fn update_post(id: i64, title: &str, content: &str, token: &str) -> Re
                 title: title.to_string(),
                 content: content.to_string(),
             })
-            .unwrap(),
+            .map_err(to_err)?,
         )
         .map_err(|e: gloo_net::Error| e.to_string())?
         .send()
@@ -139,7 +142,7 @@ pub async fn update_post(id: i64, title: &str, content: &str, token: &str) -> Re
         .map_err(|e| e.to_string())?;
 
     if !resp.ok() {
-        return Err(format!("HTTP {}", resp.status()));
+        return Err(http_error(resp).await);
     }
 
     resp.json::<Post>().await.map_err(|e| e.to_string())
@@ -154,7 +157,7 @@ pub async fn delete_post(id: i64, token: &str) -> Result<DeletePostResponse, Str
         .map_err(|e| e.to_string())?;
 
     if !resp.ok() {
-        return Err(format!("HTTP {}", resp.status()));
+        return Err(http_error(resp).await);
     }
 
     resp.json::<DeletePostResponse>()

@@ -50,17 +50,15 @@ impl BlogService {
     }
 
     pub async fn get_posts(&self, offset: i32, limit: i32) -> Result<Vec<Post>, DomainError> {
-        //todo!("Implement list posts")
         let posts = self
             .post_repository
             .list(offset as i64, limit as i64)
             .await?;
 
-        /*debug!(
-            "🔍 BlogService::get_posts - Service: {:p}",
-            self as *const _
-        );*/
-
         Ok(posts)
+    }
+
+    pub async fn count_posts(&self) -> Result<i64, DomainError> {
+        Ok(self.post_repository.count().await?)
     }
 }
