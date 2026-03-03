@@ -37,54 +37,79 @@ pub fn PostDetail() -> impl IntoView {
     });
 
     view! {
-        <Suspense fallback=move || view! { <p>"Loading..."</p> }>
-            {move || {
-                post_resource.get().map(|result| {
-                    let result = (*result).clone();
-                    match result {
-                        Err(err) => view! {
-                            <p class="error">{err}</p>
-                        }.into_any(),
-                        Ok(post) => {
-                            let is_owner = move || {
-                                auth.get().map(|a| a.user.id == post.author_id).unwrap_or(false)
-                            };
+        <div class="container py-4 mx-auto" style="max-width: 780px">
+            <Suspense fallback=move || view! { <p class="loading-text">"Loading post…"</p> }>
+                {move || {
+                    post_resource.get().map(|result| {
+                        let result = (*result).clone();
+                        match result {
+                            Err(err) => view! {
+                                <div class="alert alert-danger">{err}</div>
+                            }.into_any(),
+                            Ok(post) => {
+                                let is_owner = move || {
+                                    auth.get().map(|a| a.user.id == post.author_id).unwrap_or(false)
+                                };
 
-                            let title = post.title.clone();
-                            let content = post.content.clone();
-                            let post_id = post.id;
-                            let author_id = post.author_id;
-                            let created = post.created_at.format("%Y-%m-%d %H:%M").to_string();
-                            let updated = post.updated_at.format("%Y-%m-%d %H:%M").to_string();
+                                let title = post.title.clone();
+                                let content = post.content.clone();
+                                let post_id = post.id;
+                                let author_id = post.author_id;
+                                let created = post.created_at.format("%Y-%m-%d %H:%M").to_string();
+                                let updated = post.updated_at.format("%Y-%m-%d %H:%M").to_string();
 
-                            view! {
-                                <article>
-                                    <h1>{title}</h1>
-                                    <p class="text-muted">
-                                        {format!("Author #{} | Created: {} | Updated: {}", author_id, created, updated)}
-                                    </p>
-                                    <div>{content}</div>
+                                view! {
+                                    <div>
+                                        <A attr:class="btn btn-sm btn-outline-secondary mb-4" href="/">
+                                            "← Back to posts"
+                                        </A>
 
-                                    {move || {
-                                        if is_owner() {
-                                            view! {
-                                                <div>
-                                                    <A href=format!("/posts/{}/edit", post_id)>"Edit"</A>
-                                                    <button on:click=move |ev| (on_delete.get_value())(ev)>"Delete"</button>
+                                        <article>
+                                            <h1 class="mb-2 fw-bold">{title}</h1>
+
+                                            <div class="meta-bar">
+                                                <div class="meta-author">
+                                                    {format!("Author #{}", author_id)}
                                                 </div>
-                                            }.into_any()
-                                        } else {
-                                            view! { <div></div> }.into_any()
-                                        }
-                                    }}
-                                </article>
+                                                <div class="meta-timestamps">
+                                                    <span>{format!("Created {}", created)}</span>
+                                                    <span class="meta-sep">"·"</span>
+                                                    <span>{format!("Updated {}", updated)}</span>
+                                                </div>
+                                            </div>
 
-                                <A href="/">"Back to posts"</A>
-                            }.into_any()
+                                            <div class="post-content mb-4">{content}</div>
+
+                                            {move || {
+                                                if is_owner() {
+                                                    view! {
+                                                        <div class="owner-actions">
+                                                            <A
+                                                                attr:class="btn btn-outline-primary btn-sm px-4"
+                                                                href=format!("/posts/{}/edit", post_id)
+                                                            >
+                                                                "Edit"
+                                                            </A>
+                                                            <button
+                                                                class="btn btn-danger btn-sm px-4 ms-3"
+                                                                on:click=move |ev| (on_delete.get_value())(ev)
+                                                            >
+                                                                "Delete"
+                                                            </button>
+                                                        </div>
+                                                    }.into_any()
+                                                } else {
+                                                    view! { <div></div> }.into_any()
+                                                }
+                                            }}
+                                        </article>
+                                    </div>
+                                }.into_any()
+                            }
                         }
-                    }
-                })
-            }}
-        </Suspense>
+                    })
+                }}
+            </Suspense>
+        </div>
     }
 }

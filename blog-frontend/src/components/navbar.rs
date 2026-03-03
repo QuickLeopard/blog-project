@@ -20,20 +20,20 @@ pub fn Navbar() -> impl IntoView {
     };
 
     view! {
-        <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-3">
-            <A attr:class="navbar-brand" href="/">"Blog"</A>
-            <div class="navbar-nav ms-auto">
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4">
+            <A attr:class="navbar-brand fs-5 fw-semibold" href="/">"Blog"</A>
+            <div class="d-flex align-items-center ms-auto gap-2">
                 {move || {
                     if is_logged_in() {
                         view! {
-                            <span class="nav-link text-light">{username()}</span>
-                            <A attr:class="nav-link" href="/posts/new">"New Post"</A>
-                            <button class="btn btn-outline-light btn-sm" on:click=on_logout>"Logout"</button>
+                            <A attr:class="btn btn-sm btn-outline-light" href="/posts/new">"New Post"</A>
+                            <span class="badge bg-secondary fs-6 fw-normal px-3 py-2">{username()}</span>
+                            <button class="btn btn-sm btn-danger" on:click=on_logout>"Logout"</button>
                         }.into_any()
                     } else {
                         view! {
-                            <A attr:class="nav-link" href="/login">"Login"</A>
-                            <A attr:class="nav-link" href="/register">"Register"</A>
+                            <A attr:class="btn btn-sm btn-outline-light" href="/login">"Login"</A>
+                            <A attr:class="btn btn-sm btn-light" href="/register">"Register"</A>
                         }.into_any()
                     }
                 }}

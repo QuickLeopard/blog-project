@@ -34,9 +34,9 @@ pub fn App() -> impl IntoView {
                     <Route path=path!("/")                view=PostList/>
                     <Route path=path!("/login")           view=Login/>
                     <Route path=path!("/register")        view=Register/>
-                    //<Route path=path!("/posts/new")       view=PostCreate/>
+                    <Route path=path!("/posts/new")       view=PostCreate/>
                     <Route path=path!("/posts/:id")       view=PostDetail/>
-                    //<Route path=path!("/posts/:id/edit")  view=PostEdit/>
+                    <Route path=path!("/posts/:id/edit")  view=PostEdit/>
                 </Routes>
             </main>
         </Router>

@@ -46,45 +46,58 @@ pub fn Login() -> impl IntoView {
     let pending = login_action.pending();
 
     view! {
-        <div class="container mt-5" style="max-width: 400px">
-            <h2 class="mb-4">"Login"</h2>
+        <div class="container py-5 d-flex justify-content-center">
+            <div style="width: 100%; max-width: 420px">
+                <h2 class="page-heading text-center mb-4">"Welcome back"</h2>
+                <div class="auth-card card p-4">
+                    {move || error.get().map(|msg| view! {
+                        <div class="alert alert-danger">{msg}</div>
+                    })}
 
-            // Error banner
-            {move || error.get().map(|msg| view! {
-                <div class="alert alert-danger">{msg}</div>
-            })}
+                    <div class="mb-3">
+                        <label class="form-label">"Username"</label>
+                        <input
+                            class="form-control"
+                            type="text"
+                            placeholder="your_username"
+                            prop:value=move || username.get()
+                            on:input=move |ev| username.set(event_target_value(&ev))
+                        />
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label">"Password"</label>
+                        <input
+                            class="form-control"
+                            type="password"
+                            placeholder="••••••••"
+                            prop:value=move || password.get()
+                            on:input=move |ev| password.set(event_target_value(&ev))
+                        />
+                    </div>
 
-            <div class="mb-3">
-                <label class="form-label">"Username"</label>
-                <input
-                    class="form-control"
-                    type="text"
-                    prop:value=move || username.get()
-                    on:input=move |ev| username.set(event_target_value(&ev))
-                />
+                    <button
+                        class="btn btn-primary w-100 py-2"
+                        disabled=move || pending.get()
+                        on:click=move |_| { login_action.dispatch(()); }
+                    >
+                        {move || if pending.get() {
+                            view! {
+                                <span>
+                                    <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                    "Logging in…"
+                                </span>
+                            }.into_any()
+                        } else {
+                            view! { <span>"Log in"</span> }.into_any()
+                        }}
+                    </button>
+
+                    <p class="mt-3 mb-0 text-center text-muted small">
+                        "No account? "
+                        <A href="/register">"Create one"</A>
+                    </p>
+                </div>
             </div>
-            <div class="mb-3">
-                <label class="form-label">"Password"</label>
-                <input
-                    class="form-control"
-                    type="password"
-                    prop:value=move || password.get()
-                    on:input=move |ev| password.set(event_target_value(&ev))
-                />
-            </div>
-
-            <button
-                class="btn btn-primary w-100"
-                disabled=move || pending.get()
-                on:click=move |_| { login_action.dispatch(()); }
-            >
-                {move || if pending.get() { "Logging in…" } else { "Login" }}
-            </button>
-
-            <p class="mt-3 text-center">
-                "No account? "
-                <A href="/register">"Register"</A>
-            </p>
         </div>
     }
 }

@@ -46,8 +46,8 @@ pub fn PostCreate() -> impl IntoView {
     });
 
     view! {
-        <div class="container mt-5">
-            <h2 class="mb-4">"New Post"</h2>
+        <div class="container py-4" style="max-width: 720px">
+            <h2 class="page-heading">"New Post"</h2>
             <PostForm
                 initial_title="".to_string()
                 initial_content="".to_string()

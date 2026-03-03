@@ -24,9 +24,11 @@ jobs:
       run: cargo build --verbose --workspace
     - name: Clippy
       id: clippy
+      env:
+        CARGO_TERM_COLOR: never
       run: |
         cargo clippy --workspace --all-targets --all-features -- -D warnings 2>&1 | tee clippy.log
-        echo "status=$?" >> $GITHUB_OUTPUT
+        echo "status=${PIPESTATUS[0]}" >> $GITHUB_OUTPUT
       continue-on-error: true
     
     - name: Run tests
@@ -41,13 +43,13 @@ jobs:
         echo "Build completed successfully" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### 🔍 Clippy Analysis" >> $GITHUB_STEP_SUMMARY
-        if grep -qE "(warning:|error:)" clippy.log; then
-          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-          grep -E "(warning:|error:)" clippy.log | head -20 >> $GITHUB_STEP_SUMMARY
-          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-          ISSUE_COUNT=$(grep -cE "(warning:|error:)" clippy.log || echo "0")
-          echo "" >> $GITHUB_STEP_SUMMARY
+        if grep -qE "^warning:|^error:" clippy.log; then
+          ISSUE_COUNT=$(grep -cE "^warning:|^error:" clippy.log || echo "0")
           echo "**Found $ISSUE_COUNT issue(s)**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          cat clippy.log >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
         else
           echo "✨ No warnings found - code is clean!" >> $GITHUB_STEP_SUMMARY
         fi
