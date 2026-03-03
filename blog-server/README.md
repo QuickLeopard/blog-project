@@ -1,58 +1,58 @@
 # blog-server
 
-Actix-Web REST API and Tonic gRPC server for the blog platform.
+REST API на Actix-Web и gRPC-сервер на Tonic для блог-платформы.
 
-## Responsibilities
+## Обязанности
 
-- User registration and login with Argon2 password hashing
-- JWT-based authentication via middleware
-- CRUD operations for blog posts (owner-scoped update/delete)
-- PostgreSQL persistence with SQLx (auto-migrations on startup)
-- gRPC service (Tonic) mirroring all HTTP endpoints
+- Регистрация и вход пользователей с хэшированием паролей Argon2
+- JWT-аутентификация через middleware
+- CRUD-операции для постов блога (обновление/удаление только владельцем)
+- Хранение данных в PostgreSQL через SQLx (автоматические миграции при запуске)
+- gRPC-сервис (Tonic), дублирующий все HTTP-эндпоинты
 
-## Architecture
+## Архитектура
 
 ```
 presentation/
-├── http_public.rs      Public endpoints (login, register, get posts)
-├── http_protected.rs   JWT-protected endpoints (create, update, delete posts)
-├── middleware.rs        AuthenticatedUser extractor (JWT validation)
-└── grpc_service.rs     gRPC BlogService implementation
+├── http_public.rs      Публичные эндпоинты (вход, регистрация, получение постов)
+├── http_protected.rs   Защищённые JWT-эндпоинты (создание, обновление, удаление постов)
+├── middleware.rs        Экстрактор AuthenticatedUser (валидация JWT)
+└── grpc_service.rs     Реализация gRPC BlogService
 
 application/
-├── auth_service.rs     Register, login, token generation
-└── blog_service.rs     Post CRUD logic
+├── auth_service.rs     Регистрация, вход, генерация токенов
+└── blog_service.rs     CRUD-логика постов
 
 data/
-├── post_repository_trait.rs    PostRepository trait (async)
-├── user_repository_trait.rs    UserRepository trait (async)
-├── db_post_repository.rs       PostgreSQL implementation
-├── db_user_repository.rs       PostgreSQL implementation
-├── in_memory_post_repository.rs  In-memory impl (for testing)
-└── in_memory_user_repository.rs  In-memory impl (for testing)
+├── post_repository_trait.rs    Трейт PostRepository (async)
+├── user_repository_trait.rs    Трейт UserRepository (async)
+├── db_post_repository.rs       Реализация для PostgreSQL
+├── db_user_repository.rs       Реализация для PostgreSQL
+├── in_memory_post_repository.rs  In-memory реализация (для тестирования)
+└── in_memory_user_repository.rs  In-memory реализация (для тестирования)
 
 infrastructure/
-├── database.rs         Connection pool + migration runner
-├── jwt.rs              JwtService (generate/verify tokens)
+├── database.rs         Пул соединений + запуск миграций
+├── jwt.rs              JwtService (генерация/проверка токенов)
 ├── hash.rs             Argon2 hash_password / verify_password
-├── app_state.rs        Shared AppState struct
-└── logging.rs          Tracing setup
+├── app_state.rs        Общая структура AppState
+└── logging.rs          Настройка трассировки (tracing)
 
 domain/
-├── post.rs             Post struct, request/response types
-├── user.rs             User struct, auth request/response types
-└── error.rs            DomainError enum with HTTP status mapping
+├── post.rs             Структура Post, типы запросов/ответов
+├── user.rs             Структура User, типы запросов/ответов аутентификации
+└── error.rs            Перечисление DomainError с маппингом в HTTP-статусы
 ```
 
-## Configuration
+## Конфигурация
 
-| Env Variable | Required | Default | Description |
+| Переменная окружения | Обязательна | По умолчанию | Описание |
 |---|---|---|---|
-| `DATABASE_URL` | Yes | `postgres://localhost/blog` | PostgreSQL connection string |
-| `SECRET_TOKEN` | Yes | — | JWT signing secret |
-| `RUST_LOG` | No | `info` | Log level filter |
+| `DATABASE_URL` | Да | `postgres://localhost/blog` | Строка подключения к PostgreSQL |
+| `SECRET_TOKEN` | Да | — | Секрет для подписи JWT |
+| `RUST_LOG` | Нет | `info` | Уровень логирования |
 
-## Running
+## Запуск
 
 ```bash
 DATABASE_URL=postgres://blog_user:blog_password@localhost:5432/blog \
@@ -60,19 +60,19 @@ SECRET_TOKEN=my-dev-secret \
 cargo run -p blog-server
 ```
 
-Starts HTTP on `0.0.0.0:3000` and gRPC on `0.0.0.0:50051`. Migrations run automatically.
+Запускает HTTP на `0.0.0.0:3000` и gRPC на `0.0.0.0:50051`. Миграции выполняются автоматически.
 
-## Database
+## База данных
 
-PostgreSQL 16+ required. Two tables created by migrations in `migrations/`:
+Требуется PostgreSQL 16+. Миграции из `migrations/` создают две таблицы:
 
-- **users** — `id`, `username` (unique), `email` (unique), `password_hash`, `created_at`
+- **users** — `id`, `username` (уникальный), `email` (уникальный), `password_hash`, `created_at`
 - **posts** — `id`, `title`, `content`, `author_id` (FK → users), `created_at`, `updated_at`
 
-## Testing
+## Тестирование
 
 ```bash
 cargo test -p blog-server
 ```
 
-Unit tests exist for `hash_password`/`verify_password`. In-memory repository implementations are available for testing services without a database.
+Есть unit-тесты для `hash_password`/`verify_password`. In-memory реализации репозиториев доступны для тестирования сервисов без базы данных.

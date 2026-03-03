@@ -8,12 +8,14 @@ use async_trait::async_trait;
 use crate::domain::error::DomainError;
 use crate::domain::post::Post;
 
+#[allow(dead_code)]
 pub struct InMemoryPostRepository {
     posts: Arc<RwLock<HashMap<i64, Post>>>,
     next_post_id: Arc<RwLock<i64>>,
 }
 
 impl InMemoryPostRepository {
+    #[allow(dead_code)]
     pub fn new() -> Self {
         Self {
             posts: Arc::new(RwLock::new(HashMap::new())),
@@ -111,17 +113,15 @@ impl PostRepository for InMemoryPostRepository {
         );
 
         println!(
-            "📋 REPO ACCESS - Type: {}, Pointer: {:p}", //, Count: {}",
-            "create",                                   // or "list", "find_by_id", etc.
+            "📋 REPO ACCESS - Type: create, Pointer: {:p}",
             self.posts.as_ref() as *const _,
-            //self.posts.read().await.len()
         );
 
         Ok(posts
             .values()
-            .cloned()
             .skip(offset as usize)
             .take(limit as usize)
+            .cloned()
             .collect())
     }
 

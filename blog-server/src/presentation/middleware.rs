@@ -8,6 +8,7 @@ use crate::infrastructure::app_state::AppState;
 #[derive(Debug, Clone)]
 pub struct AuthenticatedUser {
     pub user_id: i64,
+    #[allow(dead_code)]
     pub user_name: String,
 }
 

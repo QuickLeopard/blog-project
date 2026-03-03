@@ -1,11 +1,11 @@
 use std::sync::Arc;
 
-use tracing::{debug, info};
-
 use crate::data::PostRepository;
 use crate::domain::{error::DomainError, post::Post};
 
-//#[derive(Clone)]
+const TITLE_MAX_LEN: usize = 200;
+const CONTENT_MAX_LEN: usize = 50_000;
+
 pub struct BlogService {
     post_repository: Arc<dyn PostRepository>,
 }
@@ -15,15 +15,42 @@ impl BlogService {
         Self { post_repository }
     }
 
+    fn validate_post(title: &str, content: &str) -> Result<(), DomainError> {
+        let title = title.trim();
+        let content = content.trim();
+
+        if title.is_empty() {
+            return Err(DomainError::ValidationError(
+                "Title must not be empty".into(),
+            ));
+        }
+        if title.len() > TITLE_MAX_LEN {
+            return Err(DomainError::ValidationError(
+                format!("Title must not exceed {} characters", TITLE_MAX_LEN),
+            ));
+        }
+        if content.is_empty() {
+            return Err(DomainError::ValidationError(
+                "Content must not be empty".into(),
+            ));
+        }
+        if content.len() > CONTENT_MAX_LEN {
+            return Err(DomainError::ValidationError(
+                format!("Content must not exceed {} characters", CONTENT_MAX_LEN),
+            ));
+        }
+        Ok(())
+    }
+
     pub async fn create_post(
         &self,
         title: String,
         content: String,
         author_id: i64,
     ) -> Result<Post, DomainError> {
-        self
-            .post_repository
-            .create(title, content, author_id)
+        Self::validate_post(&title, &content)?;
+        self.post_repository
+            .create(title.trim().to_string(), content.trim().to_string(), author_id)
             .await
     }
 
@@ -34,14 +61,14 @@ impl BlogService {
         content: String,
         author_id: i64,
     ) -> Result<Post, DomainError> {
-        self
-            .post_repository
-            .update(id, title, content, author_id)
+        Self::validate_post(&title, &content)?;
+        self.post_repository
+            .update(id, title.trim().to_string(), content.trim().to_string(), author_id)
             .await
     }
 
     pub async fn delete_post(&self, id: i64, author_id: i64) -> Result<bool, DomainError> {
-        Ok(self.post_repository.delete(id, author_id).await?)
+        self.post_repository.delete(id, author_id).await
     }
 
     pub async fn get_post(&self, id: i64) -> Result<Post, DomainError> {

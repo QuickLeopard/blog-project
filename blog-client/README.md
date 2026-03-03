@@ -1,23 +1,23 @@
 # blog-client
 
-Shared Rust client library for communicating with the blog-server. Provides both HTTP and gRPC transports behind a common trait.
+Общая клиентская библиотека на Rust для взаимодействия с blog-server. Предоставляет HTTP и gRPC транспорты за единым трейтом.
 
-## Design
+## Дизайн
 
 ```
 src/
-├── traits.rs        BlogService trait (async, Send + Sync)
-├── http_client.rs   HTTP implementation using reqwest
-├── grpc_client.rs   gRPC implementation using tonic
-├── blog_client.rs   BlogClient wrapper (owns a Box<dyn BlogService>)
+├── traits.rs        Трейт BlogService (async, Send + Sync)
+├── http_client.rs   HTTP-реализация на reqwest
+├── grpc_client.rs   gRPC-реализация на tonic
+├── blog_client.rs   Обёртка BlogClient (владеет Box<dyn BlogService>)
 ├── post.rs          Post, CreatePostRequest, UpdatePostRequest, ListPostsResponse
 ├── user.rs          User, LoginRequest, RegisterUserRequest, LoginUserResponse
-└── lib.rs           Module exports
+└── lib.rs           Экспорт модулей
 ```
 
-## BlogService Trait
+## Трейт BlogService
 
-Both transports implement the same trait:
+Оба транспорта реализуют один и тот же трейт:
 
 ```rust
 #[async_trait]
@@ -32,7 +32,7 @@ pub trait BlogService: Send + Sync {
 }
 ```
 
-## Usage
+## Использование
 
 ```rust
 use blog_client::blog_client::BlogClient;
@@ -44,7 +44,7 @@ let client = BlogClient::new(Box::new(transport));
 let posts = client.get_posts(0, 10).await?;
 ```
 
-For gRPC:
+Для gRPC:
 
 ```rust
 use blog_client::grpc_client::BlogGrpcClient;
@@ -53,9 +53,9 @@ let transport = BlogGrpcClient::connect("http://127.0.0.1:50051".into()).await?;
 let client = BlogClient::new(Box::new(transport));
 ```
 
-## Dependencies
+## Зависимости
 
-- `reqwest` — HTTP transport
-- `tonic` / `prost` — gRPC transport + protobuf
-- `chrono` — timestamp handling
-- `async-trait` — async trait support
+- `reqwest` — HTTP-транспорт
+- `tonic` / `prost` — gRPC-транспорт + protobuf
+- `chrono` — работа с временными метками
+- `async-trait` — поддержка async-трейтов

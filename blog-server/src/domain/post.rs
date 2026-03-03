@@ -13,6 +13,7 @@ pub struct Post {
 }
 
 impl Post {
+    #[allow(dead_code)]
     pub fn new(
         id: i64,
         title: String,

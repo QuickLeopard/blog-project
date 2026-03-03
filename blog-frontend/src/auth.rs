@@ -30,14 +30,6 @@ pub fn use_auth() -> RwSignal<Option<AuthState>> {
     expect_context::<RwSignal<Option<AuthState>>>()
 }
 
-// Call after successful login/register:
-pub fn set_auth(state: AuthState) {
-    // Persist to localStorage
-    LocalStorage::set(AUTH_KEY, &state).ok();
-    // Update the reactive signal — all subscribed components re-render
-    use_auth().set(Some(state));
-} // saves to localStorage + updates signal
-
 // Call on logout:
 pub fn clear_auth() {
     // Remove from localStorage

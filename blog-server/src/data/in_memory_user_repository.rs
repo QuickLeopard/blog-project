@@ -9,12 +9,14 @@ use crate::domain::user::User;
 
 use crate::data::UserRepository;
 
+#[allow(dead_code)]
 pub struct InMemoryUserRepository {
     users: Arc<RwLock<HashMap<i64, User>>>,
     next_user_id: Arc<RwLock<i64>>,
 }
 
 impl InMemoryUserRepository {
+    #[allow(dead_code)]
     pub fn new() -> Self {
         Self {
             users: Arc::new(RwLock::new(HashMap::new())),

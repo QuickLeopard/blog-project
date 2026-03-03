@@ -1,39 +1,39 @@
 # blog-frontend
 
-Leptos 0.7 single-page application compiled to WebAssembly, with Bootstrap 5 styling.
+Одностраничное приложение на Leptos 0.7, компилируемое в WebAssembly, со стилизацией Bootstrap 5.
 
-## Features
+## Возможности
 
-- User registration and login with JWT token persistence (localStorage)
-- Post list with paginated card layout (← Page N / M →)
-- Post detail view with author metadata, edit, and delete actions
-- Create and edit posts with a reusable form component
-- Auth-aware navbar and route protection
-- Friendly error messages parsed from server JSON responses
+- Регистрация и вход пользователей с сохранением JWT-токена в localStorage
+- Список постов с пагинацией в карточном макете (← Страница N / M →)
+- Просмотр поста с метаданными автора, кнопками редактирования и удаления
+- Создание и редактирование постов через переиспользуемый компонент формы
+- Навигационная панель с учётом аутентификации и защита маршрутов
+- Понятные сообщения об ошибках, извлечённые из JSON-ответов сервера
 
-## Architecture
+## Архитектура
 
 ```
 src/
-├── lib.rs              App component, router, WASM entry point
-├── types.rs            Shared structs (Post, User, requests, responses)
-├── api.rs              Async HTTP functions (one per endpoint)
-├── auth.rs             AuthState, localStorage persistence, context helpers
+├── lib.rs              Компонент App, роутер, точка входа WASM
+├── types.rs            Общие структуры (Post, User, запросы, ответы)
+├── api.rs              Асинхронные HTTP-функции (по одной на эндпоинт)
+├── auth.rs             AuthState, сохранение в localStorage, хелперы контекста
 ├── pages/
-│   ├── login.rs        Login form with error handling
-│   ├── register.rs     Registration form
-│   ├── post_create.rs  New post page (auth-protected)
-│   └── post_edit.rs    Edit post page (pre-fills from API)
+│   ├── login.rs        Форма входа с обработкой ошибок
+│   ├── register.rs     Форма регистрации
+│   ├── post_create.rs  Страница создания поста (защищена аутентификацией)
+│   └── post_edit.rs    Страница редактирования поста (предзаполнение из API)
 └── components/
-    ├── navbar.rs       Auth-aware navigation bar
-    ├── post_form.rs    Reusable title/content form with loading spinner
-    ├── post_list.rs    Paginated post cards (home page)
-    └── post_detail.rs  Single post view with owner actions
+    ├── navbar.rs       Навигационная панель с учётом аутентификации
+    ├── post_form.rs    Переиспользуемая форма заголовок/содержимое с индикатором загрузки
+    ├── post_list.rs    Карточки постов с пагинацией (главная страница)
+    └── post_detail.rs  Просмотр одного поста с действиями для владельца
 ```
 
-## Prerequisites
+## Требования
 
-- Rust with `wasm32-unknown-unknown` target
+- Rust с таргетом `wasm32-unknown-unknown`
 - [Trunk](https://trunkrs.dev)
 
 ```bash
@@ -41,16 +41,16 @@ rustup target add wasm32-unknown-unknown
 cargo install trunk
 ```
 
-## Running (development)
+## Запуск (разработка)
 
-Requires blog-server running on `localhost:3000` (see root README for options).
+Требует запущенный blog-server на `localhost:3000` (варианты запуска — в корневом README).
 
 ```bash
 cd blog-frontend
 trunk serve
 ```
 
-Opens on http://localhost:8080 with hot reload. API calls are proxied to the backend via `Trunk.toml`:
+Открывается на http://localhost:8080 с горячей перезагрузкой. API-запросы проксируются на бэкенд через `Trunk.toml`:
 
 ```toml
 [[proxy]]
@@ -58,14 +58,14 @@ rewrite = "/api/"
 backend = "http://localhost:3000"
 ```
 
-## Building for production
+## Сборка для продакшена
 
 ```bash
 trunk build --release
 ```
 
-Output goes to `dist/` — static files ready to be served by Nginx or any static file server. The production Docker image uses Nginx with SPA fallback (`nginx.conf`).
+Результат попадает в `dist/` — статические файлы, готовые для раздачи через Nginx или любой сервер статики. Продакшен Docker-образ использует Nginx с SPA-фоллбэком (`nginx.conf`).
 
-## Styling
+## Стилизация
 
-Bootstrap 5.3.2 is loaded from CDN in `index.html`. Custom overrides live in `style.css` (card hover effects, meta-bar layout, accent colors, loading animations).
+Bootstrap 5.3.2 загружается из CDN в `index.html`. Пользовательские переопределения находятся в `style.css` (эффекты при наведении на карточки, макет мета-панели, акцентные цвета, анимации загрузки).

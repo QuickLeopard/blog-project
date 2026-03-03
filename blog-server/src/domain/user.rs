@@ -12,6 +12,7 @@ pub struct User {
 }
 
 impl User {
+    #[allow(dead_code)]
     pub fn new(
         id: i64,
         username: String,

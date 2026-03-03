@@ -4,7 +4,7 @@ use tonic::{Request, Response, Status};
 
 use std::sync::Arc;
 
-use tracing::{debug, info};
+use tracing::debug;
 
 use crate::application::auth_service::AuthService;
 use crate::application::blog_service::BlogService;
@@ -48,6 +48,7 @@ impl BlogGrpcService {
         }
     }
 
+    #[allow(clippy::result_large_err)]
     fn get_auth_token<T>(request: &Request<T>) -> Result<String, Status> {
         request
             .metadata()
@@ -251,10 +252,10 @@ impl blog::blog_service_server::BlogService for BlogGrpcService {
         //println!("📋 LIST - Repository pointer: {:p}, count: {}", posts, posts.len());
 
         let response = blog::ListPostsResponse {
-            posts: posts.iter().map(|p| Self::post_to_grpc(p)).collect(),
+            posts: posts.iter().map(Self::post_to_grpc).collect(),
             total: posts.len() as i32,
-            offset: offset as i32,
-            limit: limit as i32,
+            offset,
+            limit,
         };
 
         Ok(Response::new(response))

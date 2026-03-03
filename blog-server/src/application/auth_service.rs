@@ -83,6 +83,8 @@ impl AuthService {
     }
 
     pub fn verify_token(&self, token: &str) -> Result<Claims, DomainError> {
-        Ok(self.jwt_service.verify_token(token)?)
+        self.jwt_service
+            .verify_token(token)
+            .map_err(DomainError::from)
     }
 }

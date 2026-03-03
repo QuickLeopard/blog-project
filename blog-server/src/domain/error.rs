@@ -1,4 +1,5 @@
 use actix_web::{HttpResponse, ResponseError, http::StatusCode};
+use tracing::{error, warn};
 
 use thiserror::Error;
 
@@ -31,20 +32,26 @@ pub enum DomainError {
     #[error("JWT error: {0}")]
     JWTError(#[from] jsonwebtoken::errors::Error),
 
-    /*#[error("Database row not found")]
-    DatabaseRowNotFound,*/
     #[error("Internal error: {0}")]
     InternalError(String),
 }
 
-/*impl From<sqlx::Error> for DomainError {
-    fn from(err: sqlx::Error) -> Self {
-        match err {
-            sqlx::Error::RowNotFound => DomainError::DatabaseRowNotFound,
-            _ => DomainError::InternalError(err.to_string()),
+impl DomainError {
+    fn log(&self) {
+        match self {
+            DomainError::DatabaseError(e) => error!(error = %e, "Database error"),
+            DomainError::Argon2Error(e) => error!(error = %e, "Argon2 hashing error"),
+            DomainError::InternalError(e) => error!(error = %e, "Internal server error"),
+            DomainError::JWTError(e) => warn!(error = %e, "JWT authentication error"),
+            DomainError::InvalidCredentials => warn!("Invalid credentials attempt"),
+            DomainError::Forbidden => warn!("Forbidden access attempt"),
+            DomainError::UserNotFound => warn!("User not found"),
+            DomainError::PostNotFound => warn!("Post not found"),
+            DomainError::UserAlreadyExists(msg) => warn!(details = %msg, "User already exists"),
+            DomainError::ValidationError(msg) => warn!(details = %msg, "Validation error"),
         }
     }
-}*/
+}
 
 impl From<argon2::password_hash::Error> for DomainError {
     fn from(err: argon2::password_hash::Error) -> Self {
@@ -54,17 +61,19 @@ impl From<argon2::password_hash::Error> for DomainError {
 
 impl ResponseError for DomainError {
     fn error_response(&self) -> HttpResponse {
+        self.log();
+
         let status = match self {
-            //DomainError::Validation(_) => StatusCode::BAD_REQUEST,
             DomainError::UserNotFound => StatusCode::NOT_FOUND,
             DomainError::PostNotFound => StatusCode::NOT_FOUND,
             DomainError::UserAlreadyExists(_) => StatusCode::CONFLICT,
             DomainError::InvalidCredentials => StatusCode::UNAUTHORIZED,
             DomainError::Forbidden => StatusCode::FORBIDDEN,
             DomainError::ValidationError(_) => StatusCode::BAD_REQUEST,
-            DomainError::DatabaseError(_) => StatusCode::INTERNAL_SERVER_ERROR,
-            DomainError::InternalError(_) => StatusCode::INTERNAL_SERVER_ERROR,
-            _ => StatusCode::INTERNAL_SERVER_ERROR,
+            DomainError::DatabaseError(_)
+            | DomainError::InternalError(_)
+            | DomainError::Argon2Error(_)
+            | DomainError::JWTError(_) => StatusCode::INTERNAL_SERVER_ERROR,
         };
 
         HttpResponse::build(status).json(serde_json::json!({
@@ -76,16 +85,20 @@ impl ResponseError for DomainError {
 
 impl From<DomainError> for tonic::Status {
     fn from(err: DomainError) -> Self {
+        err.log();
+
         match err {
             DomainError::UserNotFound => tonic::Status::not_found(err.to_string()),
             DomainError::PostNotFound => tonic::Status::not_found(err.to_string()),
             DomainError::DatabaseError(_) => tonic::Status::internal(err.to_string()),
             DomainError::JWTError(_) => tonic::Status::unauthenticated(err.to_string()),
-            //DomainError::DatabaseRowNotFound => tonic::Status::not_found(err.to_string()),
             DomainError::InvalidCredentials => tonic::Status::unauthenticated(err.to_string()),
             DomainError::Forbidden => tonic::Status::permission_denied(err.to_string()),
             DomainError::ValidationError(_) => tonic::Status::invalid_argument(err.to_string()),
-            _ => tonic::Status::internal(err.to_string()),
+            DomainError::UserAlreadyExists(_) => tonic::Status::already_exists(err.to_string()),
+            DomainError::Argon2Error(_) | DomainError::InternalError(_) => {
+                tonic::Status::internal(err.to_string())
+            }
         }
     }
 }

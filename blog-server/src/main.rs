@@ -20,9 +20,6 @@ mod presentation;
 use application::auth_service::AuthService;
 use application::blog_service::BlogService;
 
-use data::in_memory_post_repository::InMemoryPostRepository;
-use data::in_memory_user_repository::InMemoryUserRepository;
-
 use infrastructure::app_state::AppState;
 use infrastructure::database::{create_pool, run_migrations};
 
@@ -43,19 +40,12 @@ pub mod blog {
 
 use blog::blog_service_server::BlogServiceServer;
 
-fn build_cors(config: &AppConfig) -> Cors {
-    let mut cors = Cors::default()
+fn build_cors(_config: &AppConfig) -> Cors {
+    Cors::default()
         .allowed_methods(vec!["GET", "POST", "PUT", "DELETE", "OPTIONS"])
         .allow_any_header()
         .allow_any_origin()
-        //.supports_credentials()
-        .max_age(3600);
-
-    /*for origin in &config.cors_origins {
-        cors = cors.allowed_origin(origin);
-    }*/
-
-    cors
+        .max_age(3600)
 }
 
 //#[actix_web::main]
@@ -87,8 +77,8 @@ async fn main() -> anyhow::Result<()> {
     let http_address = "0.0.0.0:3000";
     let grpc_address = "0.0.0.0:50051".parse()?;
 
-    let secret_token = std::env::var("SECRET_TOKEN").expect("SECRET_TOKEN must be set");
-    //.unwrap_or_else(|_| "wt35y4urtjfgjhfgjfjfgjgfjfgjrtj454e5634tafazf".to_string());
+    let secret_token = std::env::var("SECRET_TOKEN")
+        .map_err(|_| anyhow::anyhow!("SECRET_TOKEN environment variable must be set"))?;
 
     //let auth_middleware = HttpAuthentication::bearer(jwt_validator);
 

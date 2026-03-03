@@ -1,95 +1,95 @@
 # blog-cli
 
-Command-line client for the blog platform. Supports both HTTP and gRPC protocols.
+Консольный клиент для блог-платформы. Поддерживает протоколы HTTP и gRPC.
 
-## Build
+## Сборка
 
 ```bash
 cargo build -p blog-cli
 ```
 
-## Usage
+## Использование
 
-Every command requires a protocol flag (`--http` or `--grpc`):
+Каждая команда требует флаг протокола (`--http` или `--grpc`):
 
 ```bash
-blog-cli --http <command>
-blog-cli --grpc <command>
+blog-cli --http <команда>
+blog-cli --grpc <команда>
 ```
 
-Custom server address (optional):
+Произвольный адрес сервера (необязательно):
 
 ```bash
-blog-cli --http --server 192.168.1.10:3000 <command>
-blog-cli --grpc --server 192.168.1.10:50051 <command>
+blog-cli --http --server 192.168.1.10:3000 <команда>
+blog-cli --grpc --server 192.168.1.10:50051 <команда>
 ```
 
-Default addresses: `127.0.0.1:3000` (HTTP), `127.0.0.1:50051` (gRPC).
+Адреса по умолчанию: `127.0.0.1:3000` (HTTP), `127.0.0.1:50051` (gRPC).
 
-## Commands
+## Команды
 
-### Authentication
+### Аутентификация
 
 ```bash
-# Register
+# Регистрация
 blog-cli --http register --username alice --email alice@example.com --password secret123
 
-# Login (returns JWT token)
+# Вход (возвращает JWT-токен)
 blog-cli --http login --username alice --password secret123
 ```
 
-### Posts
+### Посты
 
 ```bash
-# List posts (paginated)
+# Список постов (с пагинацией)
 blog-cli --http list-posts --offset 0 --limit 10
 
-# Get a single post
+# Получить один пост
 blog-cli --http get-post 1
 
-# Create a post (requires token)
-blog-cli --http create-post --title "Hello" --content "World" --token "<jwt>"
+# Создать пост (требуется токен)
+blog-cli --http create-post --title "Привет" --content "Мир" --token "<jwt>"
 
-# Update a post (owner only)
-blog-cli --http update-post --id 1 --title "New Title" --content "New body" --token "<jwt>"
+# Обновить пост (только владелец)
+blog-cli --http update-post --id 1 --title "Новый заголовок" --content "Новое содержимое" --token "<jwt>"
 
-# Delete a post (owner only)
+# Удалить пост (только владелец)
 blog-cli --http delete-post --id 1 --token "<jwt>"
 ```
 
-### Command Aliases
+### Псевдонимы команд
 
-| Full command | Alias |
+| Полная команда | Псевдоним |
 |---|---|
 | `create-post` | `create` |
 | `delete-post` | `delete` |
 | `update-post` | `update` |
 | `list-posts` | `list` |
 
-## Example Workflow
+## Пример рабочего процесса
 
 ```bash
-# 1. Register
+# 1. Регистрация
 blog-cli --http register --username bob --email bob@test.com --password pass123
-# Output: Registered user: bob ... token: "eyJ..."
+# Вывод: Registered user: bob ... token: "eyJ..."
 
-# 2. Login
+# 2. Вход
 blog-cli --http login --username bob --password pass123
-# Output: Logged in user: bob ... token: "eyJ..."
+# Вывод: Logged in user: bob ... token: "eyJ..."
 
-# 3. Create a post (use token from step 2)
-blog-cli --http create-post --title "My Post" --content "Content here" --token "eyJ..."
+# 3. Создание поста (используйте токен из шага 2)
+blog-cli --http create-post --title "Мой пост" --content "Содержимое" --token "eyJ..."
 
-# 4. List all posts
+# 4. Список всех постов
 blog-cli --http list-posts
 
-# 5. Update the post
-blog-cli --http update-post --id 1 --title "Updated" --content "New content" --token "eyJ..."
+# 5. Обновление поста
+blog-cli --http update-post --id 1 --title "Обновлённый" --content "Новое содержимое" --token "eyJ..."
 
-# 6. Delete the post
+# 6. Удаление поста
 blog-cli --http delete-post --id 1 --token "eyJ..."
 ```
 
-## Dependencies
+## Зависимости
 
-Uses `blog-client` library for transport abstraction and `clap` for argument parsing.
+Использует библиотеку `blog-client` для абстракции транспорта и `clap` для разбора аргументов.

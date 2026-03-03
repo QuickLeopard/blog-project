@@ -12,5 +12,6 @@ pub trait UserRepository: Send + Sync {
         password_hash: String,
     ) -> Result<User, DomainError>;
     async fn find_by_username(&self, username: &str) -> Result<Option<User>, DomainError>;
+    #[allow(dead_code)]
     async fn find_by_id(&self, id: i64) -> Result<Option<User>, DomainError>;
 }
