@@ -7,6 +7,7 @@ Cargo.lock
 *.html
 !blog-frontend/index.html
 *.txt
+!blog-frontend/style.css
 *.css
 *.js
 *.log

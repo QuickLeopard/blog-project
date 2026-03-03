@@ -21,6 +21,7 @@ COPY blog-server/Cargo.toml   ./blog-server/
 # Copy sources
 COPY blog-frontend/src        ./blog-frontend/src
 COPY blog-frontend/index.html ./blog-frontend/index.html
+COPY blog-frontend/style.css  ./blog-frontend/style.css
 COPY blog-frontend/Trunk.toml ./blog-frontend/Trunk.toml
 # Stub sources for other workspace members (needed for Cargo to resolve the workspace)
 COPY blog-client/src          ./blog-client/src
