@@ -26,7 +26,6 @@ pub fn PostCreate() -> impl IntoView {
         let content = content.clone(); 
         let token = auth.get().map(|a| a.token.clone()).unwrap_or_default();
         let navigate = navigate.clone();  // now navigate is still in scope
-        let error = error.clone();
 
         async move {
             match api::create_post(&title, &content, &token).await {

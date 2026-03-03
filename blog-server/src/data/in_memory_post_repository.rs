@@ -30,7 +30,7 @@ impl PostRepository for InMemoryPostRepository {
         content: String,
         author_id: i64,
     ) -> Result<Post, DomainError> {
-        let timestamp = chrono::Utc::now().to_rfc3339();
+        let timestamp = chrono::Utc::now();
 
         let post_id = {
             let mut id_lock = self.next_post_id.write().await;
@@ -44,8 +44,8 @@ impl PostRepository for InMemoryPostRepository {
             title,
             content,
             author_id,
-            created_at: chrono::Utc::now(),
-            updated_at: chrono::Utc::now(),
+            created_at: timestamp,
+            updated_at: timestamp,
         };
 
         println!("Created post: {:?}", post);

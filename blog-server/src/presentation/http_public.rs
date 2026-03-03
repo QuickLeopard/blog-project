@@ -1,4 +1,4 @@
-use actix_web::{HttpResponse, Responder, Scope, get, post, web};
+use actix_web::{HttpResponse, Responder, get, post, web};
 use serde::Deserialize;
 
 use crate::domain::error::DomainError;

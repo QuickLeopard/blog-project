@@ -2,8 +2,10 @@ use leptos::prelude::*;
 use leptos_router::components::A;
 use leptos_router::hooks::use_navigate;
 
+use gloo_storage::Storage;
+
 use crate::api;
-use crate::auth::{set_auth, AuthState};
+use crate::auth::{use_auth, AuthState};
 
 #[component]
 pub fn Register() -> impl IntoView {
@@ -13,8 +15,8 @@ pub fn Register() -> impl IntoView {
     let error    = RwSignal::new(None::<String>);
 
     let navigate = use_navigate();
+    let auth = use_auth();
 
-    // Action::new_local — takes one closure that owns its inputs
     let register_action = Action::new_local(move |_: &()| {
         let username = username.get();
         let email = email.get();
@@ -24,10 +26,12 @@ pub fn Register() -> impl IntoView {
         async move {
             match api::register(&username, &email, &password).await {
                 Ok(resp) => {
-                    set_auth(AuthState {
+                    let state = AuthState {
                         token: resp.token,
                         user:  resp.user,
-                    });
+                    };
+                    gloo_storage::LocalStorage::set("blog_auth", &state).ok();
+                    auth.set(Some(state));
                     error.set(None);
                     navigate("/", Default::default());
                 }

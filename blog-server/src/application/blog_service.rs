@@ -21,10 +21,10 @@ impl BlogService {
         content: String,
         author_id: i64,
     ) -> Result<Post, DomainError> {
-        Ok(self
+        self
             .post_repository
             .create(title, content, author_id)
-            .await?)
+            .await
     }
 
     pub async fn update_post(
@@ -34,10 +34,10 @@ impl BlogService {
         content: String,
         author_id: i64,
     ) -> Result<Post, DomainError> {
-        Ok(self
+        self
             .post_repository
             .update(id, title, content, author_id)
-            .await?)
+            .await
     }
 
     pub async fn delete_post(&self, id: i64, author_id: i64) -> Result<bool, DomainError> {
@@ -46,7 +46,7 @@ impl BlogService {
 
     pub async fn get_post(&self, id: i64) -> Result<Post, DomainError> {
         //todo!("Implement get post")
-        Ok(self.post_repository.find_by_id(id).await?)
+        self.post_repository.find_by_id(id).await
     }
 
     pub async fn get_posts(&self, offset: i32, limit: i32) -> Result<Vec<Post>, DomainError> {
@@ -59,6 +59,6 @@ impl BlogService {
     }
 
     pub async fn count_posts(&self) -> Result<i64, DomainError> {
-        Ok(self.post_repository.count().await?)
+        self.post_repository.count().await
     }
 }

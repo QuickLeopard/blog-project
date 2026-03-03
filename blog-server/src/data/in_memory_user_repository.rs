@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use sqlx::error::DatabaseError;
+
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;

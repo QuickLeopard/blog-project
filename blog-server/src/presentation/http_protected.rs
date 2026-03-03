@@ -1,4 +1,4 @@
-use actix_web::{HttpResponse, Responder, Scope, delete, post, put, web};
+use actix_web::{HttpResponse, Responder, delete, post, put, web};
 use tracing::info;
 
 use crate::domain::error::DomainError;
