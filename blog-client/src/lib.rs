@@ -5,12 +5,4 @@ pub mod post;
 pub mod traits;
 pub mod user;
 
-#[cfg(test)]
-mod tests {
-    use super::*;
 
-    #[test]
-    fn it_works() {
-        assert_eq!(true, true);
-    }
-}
