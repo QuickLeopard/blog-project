@@ -68,20 +68,28 @@ pub fn PostList() -> impl IntoView {
 
                                     <div class="d-flex justify-content-between align-items-center mt-3">
                                         <button
-                                            class="btn btn-outline-secondary btn-sm px-3"
+                                            class=move || if offset.get() == 0 {
+                                                "btn btn-outline-secondary btn-sm px-4"
+                                            } else {
+                                                "btn btn-primary btn-sm px-4"
+                                            }
                                             on:click=on_prev
                                             disabled=move || offset.get() == 0
-                                        >"←"</button>
+                                        >"← Prev"</button>
 
-                                        <span class="page-label text-muted">
+                                        <span class="text-muted small">
                                             {move || format!("Page {} / {}", offset.get() / limit + 1, total_pages)}
                                         </span>
 
                                         <button
-                                            class="btn btn-outline-secondary btn-sm px-3"
+                                            class=move || if is_last_page() {
+                                                "btn btn-outline-secondary btn-sm px-4"
+                                            } else {
+                                                "btn btn-primary btn-sm px-4"
+                                            }
                                             on:click=on_next
                                             disabled=is_last_page
-                                        >"→"</button>
+                                        >"Next →"</button>
                                     </div>
                                 }.into_any()
                             }

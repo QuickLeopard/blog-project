@@ -1,95 +1,95 @@
 # Blog Project
 
-A full-stack blog platform built with Rust, featuring an Actix-Web/gRPC backend, a Leptos WASM frontend, and a CLI client.
+Полнофункциональная блог-платформа на Rust: бэкенд на Actix-Web/gRPC, фронтенд на Leptos WASM и CLI-клиент.
 
-## Architecture
+## Архитектура
 
 ```
 blog-project/
-├── blog-server/      Actix-Web REST API + Tonic gRPC server
-├── blog-frontend/    Leptos 0.7 SPA (compiled to WASM, served by Trunk)
-├── blog-client/      Shared client library (HTTP + gRPC transports)
-├── blog-cli/         Command-line client using blog-client
-└── blog-wasm/        Standalone WASM utility module
+├── blog-server/      REST API на Actix-Web + gRPC-сервер на Tonic
+├── blog-frontend/    SPA на Leptos 0.7 (компилируется в WASM, раздаётся через Trunk)
+├── blog-client/      Общая клиентская библиотека (транспорты HTTP + gRPC)
+├── blog-cli/         Консольный клиент на основе blog-client
+└── blog-wasm/        Отдельный WASM-модуль утилит
 ```
 
-**Tech stack:** Rust 2024 edition, Actix-Web 4, Tonic (gRPC), Leptos 0.7 (CSR), SQLx + PostgreSQL, Argon2 password hashing, JWT authentication, Bootstrap 5 UI.
+**Стек технологий:** Rust 2024 edition, Actix-Web 4, Tonic (gRPC), Leptos 0.7 (CSR), SQLx + PostgreSQL, хэширование паролей Argon2, JWT-аутентификация, UI на Bootstrap 5.
 
-## Prerequisites
+## Требования
 
-- **Rust** (stable, 1.85+) with `wasm32-unknown-unknown` target
-- **Docker** and **Docker Compose**
-- **Trunk** (`cargo install trunk`) — for local frontend development
-- **Protobuf compiler** (`protoc`) — for gRPC code generation
+- **Rust** (stable, 1.85+) с таргетом `wasm32-unknown-unknown`
+- **Docker** и **Docker Compose**
+- **Trunk** (`cargo install trunk`) — для локальной разработки фронтенда
+- **Компилятор Protobuf** (`protoc`) — для генерации кода gRPC
 
 ```bash
 rustup target add wasm32-unknown-unknown
 cargo install trunk
 ```
 
-## Environment Setup
+## Настройка окружения
 
-Copy the example env file and edit as needed:
+Скопируйте пример файла переменных окружения и отредактируйте по необходимости:
 
 ```bash
 cp .env.example .env
 ```
 
-Required variables:
+Обязательные переменные:
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `POSTGRES_USER` | Database user | `blog_user` |
-| `POSTGRES_PASSWORD` | Database password | `blog_password` |
-| `POSTGRES_DB` | Database name | `blog` |
-| `DATABASE_URL` | Full Postgres connection string | built from above |
-| `SECRET_TOKEN` | JWT signing secret (required) | none |
-| `RUST_LOG` | Log level | `info` |
+| Переменная | Описание | По умолчанию |
+|------------|----------|--------------|
+| `POSTGRES_USER` | Пользователь базы данных | `blog_user` |
+| `POSTGRES_PASSWORD` | Пароль базы данных | `blog_password` |
+| `POSTGRES_DB` | Имя базы данных | `blog` |
+| `DATABASE_URL` | Полная строка подключения к Postgres | собирается из вышеуказанных |
+| `SECRET_TOKEN` | Секрет для подписи JWT (обязательно) | нет |
+| `RUST_LOG` | Уровень логирования | `info` |
 
 ---
 
-## Running the Project
+## Запуск проекта
 
-### Option 1: Everything in Docker
+### Вариант 1: Всё в Docker
 
-The simplest way — no local Rust toolchain needed for running.
+Самый простой способ — локальный Rust не нужен.
 
 ```bash
 docker compose up --build
 ```
 
-This starts:
-- **PostgreSQL** on port `5432`
-- **blog-server** on port `3000` (HTTP) and `50051` (gRPC)
-- **blog-frontend** on port `8080` (Nginx serving WASM + proxying `/api/` to blog-server)
+Запускает:
+- **PostgreSQL** на порту `5432`
+- **blog-server** на порту `3000` (HTTP) и `50051` (gRPC)
+- **blog-frontend** на порту `8080` (Nginx раздаёт WASM и проксирует `/api/` на blog-server)
 
-Open http://localhost:8080 in your browser.
+Откройте http://localhost:8080 в браузере.
 
-### Option 2: Backend in Docker, Frontend local (recommended for development)
+### Вариант 2: Бэкенд в Docker, фронтенд локально (рекомендуется для разработки)
 
-Best for frontend development — Trunk provides hot reload on code changes.
+Оптимально для разработки фронтенда — Trunk обеспечивает горячую перезагрузку при изменениях.
 
-**1. Start Postgres and the backend:**
+**1. Запустите Postgres и бэкенд:**
 
 ```bash
 docker compose up postgres blog-server
 ```
 
-**2. Run the frontend with Trunk:**
+**2. Запустите фронтенд через Trunk:**
 
 ```bash
 cd blog-frontend
 trunk serve
 ```
 
-Trunk starts on http://localhost:8080 and proxies `/api/` requests to `localhost:3000` (configured in `Trunk.toml`).
+Trunk запускается на http://localhost:8080 и проксирует запросы `/api/` на `localhost:3000` (настраивается в `Trunk.toml`).
 
-### Option 3: Everything local (no Docker)
+### Вариант 3: Всё локально (без Docker)
 
-**1. Start PostgreSQL locally** (e.g. via Homebrew, system package, or a standalone container):
+**1. Запустите PostgreSQL локально** (например, через пакетный менеджер или отдельный контейнер):
 
 ```bash
-# standalone Postgres container (if you prefer)
+# отдельный контейнер Postgres
 docker run -d --name blog-pg -p 5432:5432 \
   -e POSTGRES_USER=blog_user \
   -e POSTGRES_PASSWORD=blog_password \
@@ -97,7 +97,7 @@ docker run -d --name blog-pg -p 5432:5432 \
   postgres:16-alpine
 ```
 
-**2. Run the backend:**
+**2. Запустите бэкенд:**
 
 ```bash
 DATABASE_URL=postgres://blog_user:blog_password@localhost:5432/blog \
@@ -105,47 +105,47 @@ SECRET_TOKEN=my-dev-secret \
 cargo run -p blog-server
 ```
 
-The server runs migrations automatically on startup. HTTP API on `localhost:3000`, gRPC on `localhost:50051`.
+Сервер автоматически выполняет миграции при запуске. HTTP API — на `localhost:3000`, gRPC — на `localhost:50051`.
 
-**3. Run the frontend:**
+**3. Запустите фронтенд:**
 
 ```bash
 cd blog-frontend
 trunk serve
 ```
 
-Open http://localhost:8080.
+Откройте http://localhost:8080.
 
 ---
 
-## Using the CLI (`blog-cli`)
+## Использование CLI (`blog-cli`)
 
-The CLI communicates with the backend via HTTP or gRPC. It requires a running blog-server.
+CLI взаимодействует с бэкендом по HTTP или gRPC. Требует запущенный blog-server.
 
-### Build
+### Сборка
 
 ```bash
 cargo build -p blog-cli
 ```
 
-### Protocol selection
+### Выбор протокола
 
-Every command requires either `--http` or `--grpc`:
+Каждая команда требует флага `--http` или `--grpc`:
 
 ```bash
-# HTTP (default server: 127.0.0.1:3000)
-cargo run -p blog-cli -- --http <command>
+# HTTP (сервер по умолчанию: 127.0.0.1:3000)
+cargo run -p blog-cli -- --http <команда>
 
-# gRPC (default server: 127.0.0.1:50051)
-cargo run -p blog-cli -- --grpc <command>
+# gRPC (сервер по умолчанию: 127.0.0.1:50051)
+cargo run -p blog-cli -- --grpc <команда>
 
-# Custom server address
-cargo run -p blog-cli -- --http --server 192.168.1.10:3000 <command>
+# Произвольный адрес сервера
+cargo run -p blog-cli -- --http --server 192.168.1.10:3000 <команда>
 ```
 
-### Commands
+### Команды
 
-**Register a new user:**
+**Регистрация нового пользователя:**
 
 ```bash
 cargo run -p blog-cli -- --http register \
@@ -154,7 +154,7 @@ cargo run -p blog-cli -- --http register \
   --password secret123
 ```
 
-**Login (returns a JWT token):**
+**Вход (возвращает JWT-токен):**
 
 ```bash
 cargo run -p blog-cli -- --http login \
@@ -162,84 +162,184 @@ cargo run -p blog-cli -- --http login \
   --password secret123
 ```
 
-Save the token from the output for authenticated commands.
+Сохраните токен из вывода для аутентифицированных команд.
 
-**Create a post:**
+**Создать пост:**
 
 ```bash
 cargo run -p blog-cli -- --http create-post \
-  --title "My First Post" \
-  --content "Hello, world!" \
-  --token "<your-jwt-token>"
+  --title "Мой первый пост" \
+  --content "Привет, мир!" \
+  --token "<ваш-jwt-токен>"
 ```
 
-**List posts:**
+**Список постов:**
 
 ```bash
 cargo run -p blog-cli -- --http list-posts --offset 0 --limit 10
 ```
 
-**Get a single post:**
+**Получить один пост:**
 
 ```bash
 cargo run -p blog-cli -- --http get-post 1
 ```
 
-**Update a post:**
+**Обновить пост:**
 
 ```bash
 cargo run -p blog-cli -- --http update-post \
   --id 1 \
-  --title "Updated Title" \
-  --content "Updated content" \
-  --token "<your-jwt-token>"
+  --title "Обновлённый заголовок" \
+  --content "Обновлённое содержимое" \
+  --token "<ваш-jwt-токен>"
 ```
 
-**Delete a post:**
+**Удалить пост:**
 
 ```bash
 cargo run -p blog-cli -- --http delete-post \
   --id 1 \
-  --token "<your-jwt-token>"
+  --token "<ваш-jwt-токен>"
 ```
 
 ---
 
-## API Endpoints
+## Эндпоинты API
 
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| GET | `/api/health` | No | Health check |
-| POST | `/api/auth/register` | No | Register user |
-| POST | `/api/auth/login` | No | Login, returns JWT |
-| GET | `/api/posts` | No | List posts (paginated) |
-| GET | `/api/posts/:id` | No | Get single post |
-| POST | `/api/posts` | JWT | Create post |
-| PUT | `/api/posts/:id` | JWT | Update post (owner only) |
-| DELETE | `/api/posts/:id` | JWT | Delete post (owner only) |
+| Метод | Путь | Аутентификация | Описание |
+|-------|------|----------------|----------|
+| GET | `/api/health` | Нет | Проверка работоспособности |
+| POST | `/api/auth/register` | Нет | Регистрация пользователя |
+| POST | `/api/auth/login` | Нет | Вход, возвращает JWT |
+| GET | `/api/posts` | Нет | Список постов (с пагинацией) |
+| GET | `/api/posts/:id` | Нет | Получить один пост |
+| POST | `/api/posts` | JWT | Создать пост |
+| PUT | `/api/posts/:id` | JWT | Обновить пост (только владелец) |
+| DELETE | `/api/posts/:id` | JWT | Удалить пост (только владелец) |
 
 ---
 
-## Testing
+## Тестирование
 
 ```bash
-# Run all tests
+# Запустить все тесты
 cargo test --workspace
 
-# Run server tests only
+# Только тесты сервера
 cargo test -p blog-server
 
-# Run specific test module
+# Конкретный модуль тестов
 cargo test -p blog-server -- hash::tests
 ```
 
 ---
 
-## Project Structure
+## Тестирование через curl
 
-See individual README files for details:
+Все примеры используют синтаксис PowerShell (Windows). Запускайте из PowerShell или Windows Terminal.
+Замените `<TOKEN>` на значение JWT, полученное при входе или регистрации.
 
-- [blog-server/README.md](blog-server/README.md) — Backend API server
-- [blog-frontend/README.md](blog-frontend/README.md) — Leptos WASM frontend
-- [blog-client/README.md](blog-client/README.md) — Shared client library
-- [blog-cli/README.md](blog-cli/README.md) — Command-line client
+### Проверка работоспособности бэкенда
+
+```powershell
+curl http://localhost:3000/api/health
+```
+
+### Аутентификация
+
+**Регистрация нового пользователя:**
+
+```powershell
+curl -X POST http://localhost:3000/api/auth/register `
+  -H "Content-Type: application/json" `
+  -d "{\"username\":\"alice\",\"email\":\"alice@example.com\",\"password\":\"secret123\"}"
+```
+
+**Вход (возвращает JWT-токен):**
+
+```powershell
+curl -X POST http://localhost:3000/api/auth/login `
+  -H "Content-Type: application/json" `
+  -d "{\"username\":\"alice\",\"password\":\"secret123\"}"
+```
+
+Скопируйте значение поля `token` из ответа и сохраните для последующих запросов:
+
+```powershell
+$TOKEN = "eyJ..."
+```
+
+### Посты
+
+**Список постов (с пагинацией):**
+
+```powershell
+curl "http://localhost:3000/api/posts?offset=0&limit=10"
+```
+
+**Получить один пост:**
+
+```powershell
+curl http://localhost:3000/api/posts/1
+```
+
+**Создать пост (требует аутентификации):**
+
+```powershell
+curl -X POST http://localhost:3000/api/posts `
+  -H "Content-Type: application/json" `
+  -H "Authorization: Bearer $TOKEN" `
+  -d "{\"title\":\"Мой первый пост\",\"content\":\"Привет из curl!\"}"
+```
+
+**Обновить пост (только владелец):**
+
+```powershell
+curl -X PUT http://localhost:3000/api/posts/1 `
+  -H "Content-Type: application/json" `
+  -H "Authorization: Bearer $TOKEN" `
+  -d "{\"title\":\"Обновлённый заголовок\",\"content\":\"Обновлённое содержимое.\"}"
+```
+
+**Удалить пост (только владелец):**
+
+```powershell
+curl -X DELETE http://localhost:3000/api/posts/1 `
+  -H "Authorization: Bearer $TOKEN"
+```
+
+### Фронтенд (через Nginx-прокси на порту 8080)
+
+При запуске через Docker Compose Nginx проксирует `/api/` на бэкенд.
+Используйте порт `8080` вместо `3000`:
+
+```powershell
+# Проверка работоспособности через Nginx-прокси
+curl http://localhost:8080/api/health
+
+# Вход через прокси
+curl -X POST http://localhost:8080/api/auth/login `
+  -H "Content-Type: application/json" `
+  -d "{\"username\":\"alice\",\"password\":\"secret123\"}"
+
+# Список постов через прокси
+curl "http://localhost:8080/api/posts?offset=0&limit=10"
+```
+
+> **Примечание:** В PowerShell `curl` является псевдонимом для `Invoke-WebRequest`. Если в ответе приходит XML вместо JSON, используйте `curl.exe` явно (настоящий бинарник curl):
+> ```powershell
+> curl.exe -X POST http://localhost:3000/api/auth/login ...
+> ```
+> Добавьте флаг `-v` к любой команде для просмотра заголовков запроса/ответа при отладке аутентификации или проблем с CORS.
+
+---
+
+## Структура проекта
+
+Подробности в отдельных README-файлах:
+
+- [blog-server/README.md](blog-server/README.md) — Бэкенд API-сервер
+- [blog-frontend/README.md](blog-frontend/README.md) — Фронтенд на Leptos WASM
+- [blog-client/README.md](blog-client/README.md) — Общая клиентская библиотека
+- [blog-cli/README.md](blog-cli/README.md) — Консольный клиент
