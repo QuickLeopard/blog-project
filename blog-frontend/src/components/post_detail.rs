@@ -10,6 +10,8 @@ pub fn PostDetail() -> impl IntoView {
     let params = use_params_map();
     let auth = use_auth();
     let navigate = use_navigate();
+    let delete_error = RwSignal::new(None::<String>);
+    let confirming_delete = RwSignal::new(false);
 
     let id = move || {
         params
@@ -24,16 +26,23 @@ pub fn PostDetail() -> impl IntoView {
         async move { api::get_post(post_id).await }
     });
 
-    let on_delete = StoredValue::new(move |_: leptos::ev::MouseEvent| {
+    let delete_action = Action::new_local(move |_: &()| {
         let post_id = id();
         let token = auth.get().map(|a| a.token.clone()).unwrap_or_default();
         let navigate = navigate.clone();
 
-        leptos::task::spawn_local(async move {
-            if api::delete_post(post_id, &token).await.is_ok() {
-                navigate("/", Default::default());
+        async move {
+            match api::delete_post(post_id, &token).await {
+                Ok(_) => {
+                    delete_error.set(None);
+                    navigate("/", Default::default());
+                }
+                Err(e) => {
+                    confirming_delete.set(false);
+                    delete_error.set(Some(e));
+                }
             }
-        });
+        }
     });
 
     view! {
@@ -77,6 +86,10 @@ pub fn PostDetail() -> impl IntoView {
 
                                             <div class="post-content mt-4 mb-4">{content}</div>
 
+                                            {move || delete_error.get().map(|msg| view! {
+                                                <div class="alert alert-danger mt-3">{msg}</div>
+                                            })}
+
                                             {move || {
                                                 if is_owner() {
                                                     view! {
@@ -87,12 +100,37 @@ pub fn PostDetail() -> impl IntoView {
                                                             >
                                                                 "Edit"
                                                             </A>
-                                                            <button
-                                                                class="btn btn-danger btn-sm px-4 ms-3"
-                                                                on:click=move |ev| (on_delete.get_value())(ev)
-                                                            >
-                                                                "Delete"
-                                                            </button>
+                                                            {move || {
+                                                                if confirming_delete.get() {
+                                                                    view! {
+                                                                        <span class="ms-3">
+                                                                            <span class="text-danger me-2 small fw-semibold">"Are you sure?"</span>
+                                                                            <button
+                                                                                class="btn btn-danger btn-sm px-3"
+                                                                                disabled=move || delete_action.pending().get()
+                                                                                on:click=move |_| { delete_action.dispatch(()); }
+                                                                            >
+                                                                                {move || if delete_action.pending().get() { "Deleting…" } else { "Yes, delete" }}
+                                                                            </button>
+                                                                            <button
+                                                                                class="btn btn-outline-secondary btn-sm px-3 ms-1"
+                                                                                on:click=move |_| { confirming_delete.set(false); }
+                                                                            >
+                                                                                "Cancel"
+                                                                            </button>
+                                                                        </span>
+                                                                    }.into_any()
+                                                                } else {
+                                                                    view! {
+                                                                        <button
+                                                                            class="btn btn-danger btn-sm px-4 ms-3"
+                                                                            on:click=move |_| { confirming_delete.set(true); }
+                                                                        >
+                                                                            "Delete"
+                                                                        </button>
+                                                                    }.into_any()
+                                                                }
+                                                            }}
                                                         </div>
                                                     }.into_any()
                                                 } else {

@@ -8,8 +8,8 @@ use std::sync::Arc;
 
 use tonic::transport::Server;
 
-//use tracing_subscriber::EnvFilter;
 use tracing::info;
+use tracing_subscriber::EnvFilter;
 
 mod application;
 mod data;
@@ -50,31 +50,28 @@ const GRPC_PORT: u16 = 50051;
 const CORS_MAX_AGE_SECS: usize = 3600;
 
 fn build_cors(_config: &AppConfig) -> Cors {
-    Cors::default()
+    let cors = Cors::default()
         .allowed_methods(vec!["GET", "POST", "PUT", "DELETE", "OPTIONS"])
         .allow_any_header()
-        .allow_any_origin()
-        .max_age(CORS_MAX_AGE_SECS)
+        .max_age(CORS_MAX_AGE_SECS);
+
+    match std::env::var("CORS_ORIGIN") {
+        Ok(origins) => origins
+            .split(',')
+            .fold(cors, |c, origin| c.allowed_origin(origin.trim())),
+        Err(_) => cors.allow_any_origin(),
+    }
 }
 
 //#[actix_web::main]
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    //env::set_var("RUST_LOG", "debug");
-    //env_logger::init();
-
-    //tracing_subscriber::fmt::init();
-
     tracing_subscriber::fmt()
-        .with_max_level(tracing::Level::DEBUG)
+        .with_env_filter(
+            EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| EnvFilter::new("info")),
+        )
         .init();
-
-    /*tracing_subscriber::fmt()
-    .with_env_filter(
-        EnvFilter::try_from_default_env()
-            .unwrap_or_else(|_| EnvFilter::new("debug"))
-    )
-    .init();*/
 
     let database_url =
         std::env::var("DATABASE_URL").unwrap_or_else(|_| "postgres://localhost/blog".to_string());

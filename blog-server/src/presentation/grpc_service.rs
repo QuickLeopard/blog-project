@@ -240,20 +240,18 @@ impl blog::blog_service_server::BlogService for BlogGrpcService {
         let posts = self
             .blog_service
             .get_posts(offset, limit)
-            .await
-            .unwrap_or_else(|_| vec![]);
+            .await?;
 
-        debug!("📋 gRPC LIST - count: {}", posts.len());
+        let total = self
+            .blog_service
+            .count_posts()
+            .await? as i32;
 
-        //let posts = self.state.blog_service.read().await.get_posts(request.offset, request.limit).await.unwrap_or_else(|_| vec![]);
-
-        debug!("📋 gRPC LIST - offset: {}, limit: {}", offset, limit);
-
-        //println!("📋 LIST - Repository pointer: {:p}, count: {}", posts, posts.len());
+        debug!(offset, limit, count = posts.len(), total, "gRPC list_posts");
 
         let response = blog::ListPostsResponse {
             posts: posts.iter().map(Self::post_to_grpc).collect(),
-            total: posts.len() as i32,
+            total,
             offset,
             limit,
         };
