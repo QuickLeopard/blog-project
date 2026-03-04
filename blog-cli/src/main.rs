@@ -1,8 +1,11 @@
-use anyhow::Result;
+use std::process;
 
 use clap::{ArgGroup, Parser};
 
 use blog_client::blog_client::BlogClient;
+use blog_client::error::BlogClientError;
+
+const TOKEN_FILE: &str = ".blog_token";
 
 #[derive(clap::Subcommand, Debug)]
 enum Commands {
@@ -27,14 +30,14 @@ enum Commands {
         #[arg(long)]
         content: String,
         #[arg(long)]
-        token: String,
+        token: Option<String>,
     },
     #[command(alias = "delete")]
     DeletePost {
         #[arg(long)]
         id: i64,
         #[arg(long)]
-        token: String,
+        token: Option<String>,
     },
     #[command(alias = "update")]
     UpdatePost {
@@ -45,7 +48,7 @@ enum Commands {
         #[arg(long)]
         content: String,
         #[arg(long)]
-        token: String,
+        token: Option<String>,
     },
     #[command(alias = "list")]
     ListPosts {
@@ -56,7 +59,6 @@ enum Commands {
     },
     #[command(alias = "get")]
     GetPost { id: i64 },
-    //CountPosts,
 }
 
 #[derive(Parser, Debug)]
@@ -83,51 +85,54 @@ struct Cli {
     command: Commands,
 }
 
-async fn get_posts(client: &BlogClient, offset: i32, limit: i32) -> Result<()> {
-    let posts = client.get_posts(offset, limit).await?;
-    println!("Fetched {} posts...", posts.len());
-    for post in posts {
-        println!(
-            "Post ID: {}, Title: \"{}\", Content: \"{}\"",
-            post.id, post.title, post.content
-        );
+fn save_token(token: &str) {
+    if let Err(e) = std::fs::write(TOKEN_FILE, token) {
+        eprintln!("Warning: could not save token to {TOKEN_FILE}: {e}");
     }
-
-    Ok(())
 }
 
-async fn get_post(client: &BlogClient, id: i64) -> Result<()> {
-    let post = client.get_post(id).await?;
-    println!(
-        "Post ID: {}, Title: \"{}\", Content: \"{}\"",
-        post.id, post.title, post.content
-    );
-    Ok(())
+fn load_token() -> Option<String> {
+    std::fs::read_to_string(TOKEN_FILE)
+        .ok()
+        .map(|s| s.trim().to_string())
+        .filter(|s| !s.is_empty())
 }
 
-/*async fn count_posts(client: &BlogClient) -> Result<()> {
-    let count = client.count_posts().await?;
-    println!("Total posts: {}", count);
-    Ok(())
-}*/
+fn resolve_token(explicit: Option<String>) -> Result<String, BlogClientError> {
+    explicit
+        .or_else(load_token)
+        .ok_or_else(|| {
+            BlogClientError::Unauthorized(
+                "Not authenticated. Run `register` or `login` first, or pass --token.".into(),
+            )
+        })
+}
 
-#[tokio::main]
-async fn main() -> Result<()> {
+fn print_error(err: &BlogClientError) {
+    match err {
+        BlogClientError::Unauthorized(msg) => eprintln!("Error: {msg}"),
+        BlogClientError::NotFound => eprintln!("Error: Resource not found."),
+        BlogClientError::Conflict(msg) => eprintln!("Error: Conflict — {msg}"),
+        BlogClientError::InvalidRequest(msg) => eprintln!("Error: Bad request — {msg}"),
+        other => eprintln!("Error: {other}"),
+    }
+}
+
+async fn run() -> Result<(), BlogClientError> {
     let cli = Cli::parse();
 
-    // Set different defaults based on protocol
     let host = cli.server.unwrap_or_else(|| {
         if cli.grpc {
-            "127.0.0.1:50051".to_string() // Default gRPC port
+            "127.0.0.1:50051".to_string()
         } else {
-            "127.0.0.1:3000".to_string() // Default HTTP port
+            "127.0.0.1:3000".to_string()
         }
     });
 
     println!(
-        "Using server address: {} protocol: {}",
-        host,
-        if cli.grpc { "gRPC" } else { "HTTP" }
+        "Using {} at {}",
+        if cli.grpc { "gRPC" } else { "HTTP" },
+        host
     );
 
     let transport: Box<dyn blog_client::traits::BlogService> = if cli.grpc {
@@ -150,32 +155,29 @@ async fn main() -> Result<()> {
             password,
         } => {
             let response = client.register_user(username, email, password).await?;
-            println!(
-                "Registered user: {} with email: {} token: \"{}\"",
-                response.user.username, response.user.email, response.token
-            );
+            save_token(&response.token);
+            println!("✓ Registered as {}", response.user.username);
+            println!("  Token saved to {TOKEN_FILE}");
         }
         Commands::Login { username, password } => {
             let response = client.login_user(username, password).await?;
-            println!(
-                "Logged in user: {} with email: {} token: \"{}\"",
-                response.user.username, response.user.email, response.token
-            );
+            save_token(&response.token);
+            println!("✓ Logged in as {}", response.user.username);
+            println!("  Token saved to {TOKEN_FILE}");
         }
         Commands::CreatePost {
             title,
             content,
             token,
         } => {
+            let token = resolve_token(token)?;
             let post = client.create_post(title, content, token).await?;
-            println!(
-                "Created post with ID: {}, Title: \"{}\", Content: \"{}\"",
-                post.id, post.title, post.content
-            );
+            println!("✓ Created post #{}: \"{}\"", post.id, post.title);
         }
         Commands::DeletePost { id, token } => {
+            let token = resolve_token(token)?;
             client.delete_post(id, token).await?;
-            println!("Deleted post with ID: {}", id);
+            println!("✓ Deleted post #{id}");
         }
         Commands::UpdatePost {
             id,
@@ -183,21 +185,44 @@ async fn main() -> Result<()> {
             content,
             token,
         } => {
+            let token = resolve_token(token)?;
             let post = client.update_post(id, title, content, token).await?;
-            println!(
-                "Updated post with ID: {}, Title: \"{}\", Content: \"{}\"",
-                post.id, post.title, post.content
-            );
+            println!("✓ Updated post #{}: \"{}\"", post.id, post.title);
         }
         Commands::ListPosts { offset, limit } => {
-            get_posts(&client, offset, limit).await?;
+            let posts = client.get_posts(offset, limit).await?;
+            if posts.is_empty() {
+                println!("No posts found.");
+            } else {
+                println!("Posts (offset={offset}, limit={limit}):");
+                for post in &posts {
+                    println!(
+                        "  #{:<4} {} (by user #{})",
+                        post.id, post.title, post.author_id
+                    );
+                }
+                println!("({} posts shown)", posts.len());
+            }
         }
         Commands::GetPost { id } => {
-            get_post(&client, id).await?;
-        } //Commands::CountPosts => {
-          //    count_posts(&client).await?;
-          //}
+            let post = client.get_post(id).await?;
+            println!("Post #{}", post.id);
+            println!("  Title:   {}", post.title);
+            println!("  Author:  user #{}", post.author_id);
+            println!("  Created: {}", post.created_at.format("%Y-%m-%d %H:%M:%S"));
+            println!("  Updated: {}", post.updated_at.format("%Y-%m-%d %H:%M:%S"));
+            println!("  ─────────────────────────");
+            println!("  {}", post.content);
+        }
     }
 
     Ok(())
+}
+
+#[tokio::main]
+async fn main() {
+    if let Err(err) = run().await {
+        print_error(&err);
+        process::exit(1);
+    }
 }

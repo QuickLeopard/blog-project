@@ -1,7 +1,6 @@
 use async_trait::async_trait;
 
-use reqwest;
-
+use crate::error::BlogClientError;
 use crate::post::{CreatePostRequest, ListPostsResponse, Post, UpdatePostRequest};
 use crate::traits::BlogService;
 use crate::user::{LoginUserResponse, RegisterUserRequest};
@@ -15,8 +14,29 @@ impl HttpClient {
     pub fn new(url: String) -> Self {
         Self {
             url,
-            client: reqwest::Client::new(),
+            client: reqwest::Client::builder()
+                .timeout(std::time::Duration::from_secs(30))
+                .build()
+                .unwrap_or_default(),
         }
+    }
+}
+
+async fn map_http_error(resp: reqwest::Response) -> BlogClientError {
+    let status = resp.status().as_u16();
+    let body = resp.text().await.unwrap_or_default();
+
+    let msg = serde_json::from_str::<serde_json::Value>(&body)
+        .ok()
+        .and_then(|v| v.get("error").and_then(|e| e.as_str()).map(String::from))
+        .unwrap_or(body);
+
+    match status {
+        401 | 403 => BlogClientError::Unauthorized(msg),
+        404 => BlogClientError::NotFound,
+        409 => BlogClientError::Conflict(msg),
+        400 | 422 => BlogClientError::InvalidRequest(msg),
+        _ => BlogClientError::Internal(format!("HTTP {status}: {msg}")),
     }
 }
 
@@ -26,44 +46,47 @@ impl BlogService for HttpClient {
         &self,
         username: String,
         password: String,
-    ) -> anyhow::Result<LoginUserResponse> {
+    ) -> Result<LoginUserResponse, BlogClientError> {
         let login_request = crate::user::LoginRequest { username, password };
 
-        let response = self
+        let resp = self
             .client
             .post(format!("{}/api/auth/login", self.url))
             .json(&login_request)
             .send()
-            .await?
-            .error_for_status()?
-            .json::<LoginUserResponse>()
             .await?;
 
-        Ok(response)
+        if !resp.status().is_success() {
+            return Err(map_http_error(resp).await);
+        }
+
+        Ok(resp.json::<LoginUserResponse>().await?)
     }
+
     async fn register_user(
         &self,
         username: String,
         email: String,
         password: String,
-    ) -> anyhow::Result<LoginUserResponse> {
+    ) -> Result<LoginUserResponse, BlogClientError> {
         let register_request = RegisterUserRequest {
             username,
             email,
             password,
         };
 
-        let response = self
+        let resp = self
             .client
             .post(format!("{}/api/auth/register", self.url))
             .json(&register_request)
             .send()
-            .await?
-            .error_for_status()?
-            .json::<LoginUserResponse>()
             .await?;
 
-        Ok(response)
+        if !resp.status().is_success() {
+            return Err(map_http_error(resp).await);
+        }
+
+        Ok(resp.json::<LoginUserResponse>().await?)
     }
 
     async fn create_post(
@@ -71,32 +94,37 @@ impl BlogService for HttpClient {
         title: String,
         content: String,
         token: String,
-    ) -> anyhow::Result<Post> {
+    ) -> Result<Post, BlogClientError> {
         let post = CreatePostRequest { title, content };
 
-        let response = self
+        let resp = self
             .client
             .post(format!("{}/api/posts", self.url))
             .header("Authorization", format!("Bearer {}", token))
             .json(&post)
             .send()
-            .await?
-            .error_for_status()?
-            .json::<Post>()
             .await?;
 
-        Ok(response)
+        if !resp.status().is_success() {
+            return Err(map_http_error(resp).await);
+        }
+
+        Ok(resp.json::<Post>().await?)
     }
 
-    async fn delete(&self, id: i64, token: String) -> anyhow::Result<bool> {
-        let response = self
+    async fn delete(&self, id: i64, token: String) -> Result<bool, BlogClientError> {
+        let resp = self
             .client
             .delete(format!("{}/api/posts/{}", self.url, id))
             .header("Authorization", format!("Bearer {}", token))
             .send()
-            .await?
-            .error_for_status()?;
-        Ok(response.status().as_u16() == 200)
+            .await?;
+
+        if !resp.status().is_success() {
+            return Err(map_http_error(resp).await);
+        }
+
+        Ok(true)
     }
 
     async fn update(
@@ -105,56 +133,53 @@ impl BlogService for HttpClient {
         title: String,
         content: String,
         token: String,
-    ) -> anyhow::Result<Post> {
+    ) -> Result<Post, BlogClientError> {
         let post = UpdatePostRequest { title, content };
 
-        let response = self
+        let resp = self
             .client
             .put(format!("{}/api/posts/{}", self.url, id))
             .header("Authorization", format!("Bearer {}", token))
             .json(&post)
             .send()
-            .await?
-            .error_for_status()?
-            .json::<Post>()
             .await?;
 
-        Ok(response)
+        if !resp.status().is_success() {
+            return Err(map_http_error(resp).await);
+        }
+
+        Ok(resp.json::<Post>().await?)
     }
 
-    async fn get_post(&self, id: i64) -> anyhow::Result<Post> {
-        let response = self
+    async fn get_post(&self, id: i64) -> Result<Post, BlogClientError> {
+        let resp = self
             .client
             .get(format!("{}/api/posts/{}", self.url, id))
             .send()
-            .await?
-            .error_for_status()?
-            .json::<Post>()
             .await?;
 
-        Ok(response)
+        if !resp.status().is_success() {
+            return Err(map_http_error(resp).await);
+        }
+
+        Ok(resp.json::<Post>().await?)
     }
 
-    async fn get_posts(&self, offset: i32, limit: i32) -> anyhow::Result<Vec<Post>> {
-        let response = self
+    async fn get_posts(&self, offset: i32, limit: i32) -> Result<Vec<Post>, BlogClientError> {
+        let resp = self
             .client
             .get(format!(
                 "{}/api/posts?offset={}&limit={}",
                 self.url, offset, limit
             ))
             .send()
-            .await?
-            .error_for_status()?
-            .json::<ListPostsResponse>()
             .await?;
 
-        Ok(response.posts)
+        if !resp.status().is_success() {
+            return Err(map_http_error(resp).await);
+        }
 
-        //Ok(vec![]) // Placeholder
+        let list = resp.json::<ListPostsResponse>().await?;
+        Ok(list.posts)
     }
-
-    /*async fn count_posts(&self) -> anyhow::Result<i64> {
-        todo!("Implement HTTP client to count posts from the server")
-        //Ok(0) // Placeholder
-    }*/
 }

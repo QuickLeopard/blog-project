@@ -1,8 +1,9 @@
+use crate::error::BlogClientError;
 use crate::post::Post;
 use crate::traits::BlogService;
+use crate::user::LoginUserResponse;
 
 pub struct BlogClient {
-    //todo!("Implement BlogClient to interact with the HTTP client and provide a higher-level API for the application")
     transport: Box<dyn BlogService>,
 }
 
@@ -15,7 +16,7 @@ impl BlogClient {
         &self,
         username: String,
         password: String,
-    ) -> anyhow::Result<crate::user::LoginUserResponse> {
+    ) -> Result<LoginUserResponse, BlogClientError> {
         self.transport.login_user(username, password).await
     }
 
@@ -24,7 +25,7 @@ impl BlogClient {
         username: String,
         email: String,
         password: String,
-    ) -> anyhow::Result<crate::user::LoginUserResponse> {
+    ) -> Result<LoginUserResponse, BlogClientError> {
         self.transport
             .register_user(username, email, password)
             .await
@@ -35,11 +36,15 @@ impl BlogClient {
         title: String,
         content: String,
         token: String,
-    ) -> anyhow::Result<Post> {
+    ) -> Result<Post, BlogClientError> {
         self.transport.create_post(title, content, token).await
     }
 
-    pub async fn delete_post(&self, id: i64, token: String) -> anyhow::Result<bool> {
+    pub async fn delete_post(
+        &self,
+        id: i64,
+        token: String,
+    ) -> Result<bool, BlogClientError> {
         self.transport.delete(id, token).await
     }
 
@@ -49,19 +54,19 @@ impl BlogClient {
         title: String,
         content: String,
         token: String,
-    ) -> anyhow::Result<Post> {
+    ) -> Result<Post, BlogClientError> {
         self.transport.update(id, title, content, token).await
     }
 
-    pub async fn get_post(&self, id: i64) -> anyhow::Result<Post> {
+    pub async fn get_post(&self, id: i64) -> Result<Post, BlogClientError> {
         self.transport.get_post(id).await
     }
 
-    pub async fn get_posts(&self, offset: i32, limit: i32) -> anyhow::Result<Vec<Post>> {
+    pub async fn get_posts(
+        &self,
+        offset: i32,
+        limit: i32,
+    ) -> Result<Vec<Post>, BlogClientError> {
         self.transport.get_posts(offset, limit).await
     }
-
-    /*pub async fn count_posts(&self) -> anyhow::Result<i64> {
-        self.transport.count_posts().await
-    }*/
 }

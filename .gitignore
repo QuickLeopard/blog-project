@@ -12,6 +12,7 @@ Cargo.lock
 *.js
 *.log
 */ISSUES.md
+CURRENT-ISSUES.md
 *.bin
 dist/
 *.wasm

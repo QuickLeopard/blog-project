@@ -1,11 +1,8 @@
-//use crate::blog::blog_service_client::Client;
 use chrono::{DateTime, Utc};
+use tonic::metadata::MetadataValue;
 use tonic::Request;
 
-use tonic::metadata::MetadataValue;
-
-use anyhow::Context;
-
+use crate::error::BlogClientError;
 use crate::post::Post;
 use crate::traits::BlogService;
 use crate::user::{LoginUserResponse, User};
@@ -14,10 +11,45 @@ pub mod blog {
     tonic::include_proto!("blog");
 }
 
-// Convert Option<Timestamp> to DateTime<Utc>
-fn timestamp_to_datetime(ts: Option<prost_types::Timestamp>) -> anyhow::Result<DateTime<Utc>> {
-    let ts = ts.context("Timestamp field is missing")?;
-    DateTime::from_timestamp(ts.seconds, ts.nanos as u32).context("Invalid timestamp value")
+fn map_grpc_status(status: tonic::Status) -> BlogClientError {
+    match status.code() {
+        tonic::Code::NotFound => BlogClientError::NotFound,
+        tonic::Code::Unauthenticated | tonic::Code::PermissionDenied => {
+            BlogClientError::Unauthorized(status.message().to_string())
+        }
+        tonic::Code::AlreadyExists => BlogClientError::Conflict(status.message().to_string()),
+        tonic::Code::InvalidArgument => {
+            BlogClientError::InvalidRequest(status.message().to_string())
+        }
+        _ => BlogClientError::Internal(status.message().to_string()),
+    }
+}
+
+fn timestamp_to_datetime(
+    ts: Option<prost_types::Timestamp>,
+) -> Result<DateTime<Utc>, BlogClientError> {
+    let ts = ts.ok_or_else(|| BlogClientError::Internal("Timestamp field is missing".into()))?;
+    DateTime::from_timestamp(ts.seconds, ts.nanos as u32)
+        .ok_or_else(|| BlogClientError::Internal("Invalid timestamp value".into()))
+}
+
+fn authed_request<T>(msg: T, token: &str) -> Result<Request<T>, BlogClientError> {
+    let mut request = Request::new(msg);
+    let token_value = MetadataValue::try_from(format!("Bearer {}", token))
+        .map_err(|e| BlogClientError::Internal(e.to_string()))?;
+    request.metadata_mut().insert("authorization", token_value);
+    Ok(request)
+}
+
+fn grpc_post(post: blog::Post) -> Result<Post, BlogClientError> {
+    Ok(Post {
+        id: post.id,
+        title: post.title,
+        content: post.content,
+        author_id: post.author_id,
+        created_at: timestamp_to_datetime(post.created_at)?,
+        updated_at: timestamp_to_datetime(post.updated_at)?,
+    })
 }
 
 pub struct BlogGrpcClient {
@@ -25,7 +57,7 @@ pub struct BlogGrpcClient {
 }
 
 impl BlogGrpcClient {
-    pub async fn connect(addr: String) -> anyhow::Result<Self> {
+    pub async fn connect(addr: String) -> Result<Self, BlogClientError> {
         let client = blog::blog_service_client::BlogServiceClient::connect(addr).await?;
         Ok(Self { client })
     }
@@ -37,22 +69,22 @@ impl BlogService for BlogGrpcClient {
         &self,
         username: String,
         password: String,
-    ) -> anyhow::Result<LoginUserResponse> {
+    ) -> Result<LoginUserResponse, BlogClientError> {
         let mut client = self.client.clone();
         let request = Request::new(blog::LoginRequest {
             username: username.clone(),
             password,
         });
 
-        let response = client.login(request).await?.into_inner();
+        let response = client.login(request).await.map_err(map_grpc_status)?.into_inner();
 
         if !response.success {
-            return Err(anyhow::anyhow!("{}", response.message));
+            return Err(BlogClientError::Unauthorized(response.message));
         }
 
         let user = response
             .user
-            .ok_or_else(|| anyhow::anyhow!("User not provided in response"))?;
+            .ok_or_else(|| BlogClientError::Internal("User not provided in response".into()))?;
 
         Ok(LoginUserResponse {
             user: User {
@@ -64,28 +96,33 @@ impl BlogService for BlogGrpcClient {
             token: response.token,
         })
     }
+
     async fn register_user(
         &self,
         username: String,
         email: String,
         password: String,
-    ) -> anyhow::Result<LoginUserResponse> {
+    ) -> Result<LoginUserResponse, BlogClientError> {
         let mut client = self.client.clone();
         let request = Request::new(blog::RegisterRequest {
             username: username.clone(),
             email: email.clone(),
-            password: password.clone(),
+            password,
         });
 
-        let response = client.register(request).await?.into_inner();
+        let response = client
+            .register(request)
+            .await
+            .map_err(map_grpc_status)?
+            .into_inner();
 
         if !response.success {
-            return Err(anyhow::anyhow!("{}", response.message));
+            return Err(BlogClientError::Conflict(response.message));
         }
 
         let user = response
             .user
-            .ok_or_else(|| anyhow::anyhow!("User not provided in response"))?;
+            .ok_or_else(|| BlogClientError::Internal("User not provided in response".into()))?;
 
         Ok(LoginUserResponse {
             user: User {
@@ -103,46 +140,38 @@ impl BlogService for BlogGrpcClient {
         title: String,
         content: String,
         token: String,
-    ) -> anyhow::Result<Post> {
+    ) -> Result<Post, BlogClientError> {
         let mut client = self.client.clone();
-        let mut request = Request::new(blog::CreatePostRequest { title, content });
+        let request = authed_request(blog::CreatePostRequest { title, content }, &token)?;
 
-        // Add token to metadata
-        let token_value = MetadataValue::try_from(format!("Bearer {}", token))?;
-        request.metadata_mut().insert("authorization", token_value);
-
-        let response = client.create_post(request).await?.into_inner();
+        let response = client
+            .create_post(request)
+            .await
+            .map_err(map_grpc_status)?
+            .into_inner();
 
         if !response.success {
-            return Err(anyhow::anyhow!("{}", response.message));
+            return Err(BlogClientError::Internal(response.message));
         }
 
-        let post = response
+        response
             .post
-            .ok_or_else(|| anyhow::anyhow!("Post not provided in response"))?;
-
-        Ok(Post {
-            id: post.id,
-            title: post.title,
-            content: post.content,
-            author_id: post.author_id,
-            created_at: timestamp_to_datetime(post.created_at)?,
-            updated_at: timestamp_to_datetime(post.updated_at)?,
-        })
+            .ok_or_else(|| BlogClientError::Internal("Post not provided in response".into()))
+            .and_then(grpc_post)
     }
 
-    async fn delete(&self, id: i64, token: String) -> anyhow::Result<bool> {
+    async fn delete(&self, id: i64, token: String) -> Result<bool, BlogClientError> {
         let mut client = self.client.clone();
-        let mut request = Request::new(blog::DeletePostRequest { id });
+        let request = authed_request(blog::DeletePostRequest { id }, &token)?;
 
-        // Add token to metadata
-        let token_value = MetadataValue::try_from(format!("Bearer {}", token))?;
-        request.metadata_mut().insert("authorization", token_value);
-
-        let response = client.delete_post(request).await?.into_inner();
+        let response = client
+            .delete_post(request)
+            .await
+            .map_err(map_grpc_status)?
+            .into_inner();
 
         if !response.success {
-            return Err(anyhow::anyhow!("{}", response.message));
+            return Err(BlogClientError::Internal(response.message));
         }
 
         Ok(true)
@@ -154,83 +183,56 @@ impl BlogService for BlogGrpcClient {
         title: String,
         content: String,
         token: String,
-    ) -> anyhow::Result<Post> {
+    ) -> Result<Post, BlogClientError> {
         let mut client = self.client.clone();
-        let mut request = Request::new(blog::UpdatePostRequest { id, title, content });
+        let request = authed_request(blog::UpdatePostRequest { id, title, content }, &token)?;
 
-        // Add token to metadata
-        let token_value = MetadataValue::try_from(format!("Bearer {}", token))?;
-        request.metadata_mut().insert("authorization", token_value);
-
-        let response = client.update_post(request).await?.into_inner();
+        let response = client
+            .update_post(request)
+            .await
+            .map_err(map_grpc_status)?
+            .into_inner();
 
         if !response.success {
-            return Err(anyhow::anyhow!("{}", response.message));
+            return Err(BlogClientError::Internal(response.message));
         }
 
-        let post = response
+        response
             .post
-            .ok_or_else(|| anyhow::anyhow!("Post not provided in response"))?;
-
-        Ok(Post {
-            id: post.id,
-            title: post.title,
-            content: post.content,
-            author_id: post.author_id,
-            created_at: timestamp_to_datetime(post.created_at)?,
-            updated_at: timestamp_to_datetime(post.updated_at)?,
-        })
+            .ok_or_else(|| BlogClientError::Internal("Post not provided in response".into()))
+            .and_then(grpc_post)
     }
 
-    async fn get_post(&self, id: i64) -> anyhow::Result<Post> {
+    async fn get_post(&self, id: i64) -> Result<Post, BlogClientError> {
         let mut client = self.client.clone();
-        client
+        let response = client
             .get_post(Request::new(blog::GetPostRequest { id }))
-            .await?
-            .into_inner()
+            .await
+            .map_err(map_grpc_status)?
+            .into_inner();
+
+        response
             .post
-            .ok_or_else(|| anyhow::anyhow!("Post not found"))
-            .and_then(|post| {
-                Ok(Post {
-                    id: post.id,
-                    title: post.title,
-                    content: post.content,
-                    author_id: post.author_id,
-                    created_at: timestamp_to_datetime(post.created_at)?,
-                    updated_at: timestamp_to_datetime(post.updated_at)?,
-                })
-            })
+            .ok_or_else(|| BlogClientError::NotFound)
+            .and_then(grpc_post)
     }
 
-    async fn get_posts(&self, offset: i32, limit: i32) -> anyhow::Result<Vec<Post>> {
+    async fn get_posts(&self, offset: i32, limit: i32) -> Result<Vec<Post>, BlogClientError> {
         let mut client = self.client.clone();
         let request = Request::new(blog::ListPostsRequest {
             offset: Some(offset),
             limit: Some(limit),
         });
-        let response = client.list_posts(request).await?.into_inner();
+        let response = client
+            .list_posts(request)
+            .await
+            .map_err(map_grpc_status)?
+            .into_inner();
 
-        // Map to Result<Post>, then collect into Result<Vec<Post>>
         response
             .posts
             .into_iter()
-            .map(|post| {
-                Ok(Post {
-                    id: post.id,
-                    title: post.title,
-                    content: post.content,
-                    author_id: post.author_id,
-                    created_at: timestamp_to_datetime(post.created_at)?,
-                    updated_at: timestamp_to_datetime(post.updated_at)?,
-                })
-            })
-            .collect::<anyhow::Result<Vec<_>>>()
+            .map(grpc_post)
+            .collect::<Result<Vec<_>, _>>()
     }
-
-    /*async fn count_posts(&self) -> anyhow::Result<i64> {
-        let mut client = self.client.clone();
-        let request = Request::new(blog::CountPostsRequest {});
-        let response = client.count_posts(request).await?.into_inner();
-        Ok(response.count)
-    }*/
 }
