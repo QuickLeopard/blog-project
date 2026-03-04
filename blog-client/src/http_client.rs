@@ -1,6 +1,10 @@
 use async_trait::async_trait;
 
 use crate::error::BlogClientError;
+
+/// Timeout for all outgoing HTTP requests. Applies to the entire request
+/// lifecycle (connection + send + receive).
+const HTTP_TIMEOUT_SECS: u64 = 30;
 use crate::post::{CreatePostRequest, ListPostsResponse, Post, UpdatePostRequest};
 use crate::traits::BlogService;
 use crate::user::{LoginUserResponse, RegisterUserRequest};
@@ -15,7 +19,7 @@ impl HttpClient {
         Self {
             url,
             client: reqwest::Client::builder()
-                .timeout(std::time::Duration::from_secs(30))
+                .timeout(std::time::Duration::from_secs(HTTP_TIMEOUT_SECS))
                 .build()
                 .unwrap_or_default(),
         }

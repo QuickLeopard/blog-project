@@ -3,6 +3,9 @@ use core::str;
 use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation, decode, encode};
 use serde::{Deserialize, Serialize};
 
+/// How long a newly issued JWT remains valid.
+const TOKEN_TTL_HOURS: i64 = 1;
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Claims {
     pub user_id: i64,
@@ -31,7 +34,7 @@ impl JwtService {
             user_id,
             user_name: user_name.to_string(),
             exp: chrono::Utc::now()
-                .checked_add_signed(chrono::Duration::hours(1))
+                .checked_add_signed(chrono::Duration::hours(TOKEN_TTL_HOURS))
                 .ok_or_else(|| {
                     jsonwebtoken::errors::Error::from(jsonwebtoken::errors::ErrorKind::InvalidToken)
                 })?

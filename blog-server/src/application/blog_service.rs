@@ -3,7 +3,10 @@ use std::sync::Arc;
 use crate::data::PostRepository;
 use crate::domain::{error::DomainError, post::Post};
 
+/// Maximum allowed byte length for a post title (after trimming whitespace).
 const TITLE_MAX_LEN: usize = 200;
+
+/// Maximum allowed byte length for post content (after trimming whitespace).
 const CONTENT_MAX_LEN: usize = 50_000;
 
 pub struct BlogService {

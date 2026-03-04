@@ -5,7 +5,18 @@ use clap::{ArgGroup, Parser};
 use blog_client::blog_client::BlogClient;
 use blog_client::error::BlogClientError;
 
+/// File in the current working directory where the JWT is stored after login.
+/// The token is stored as plaintext — do not commit this file to version control.
 const TOKEN_FILE: &str = ".blog_token";
+
+/// Default server address when `--http` is used and `--server` is not specified.
+const DEFAULT_HTTP_ADDR: &str = "127.0.0.1:3000";
+
+/// Default server address when `--grpc` is used and `--server` is not specified.
+const DEFAULT_GRPC_ADDR: &str = "127.0.0.1:50051";
+
+/// Default number of posts to show per page in `list-posts`.
+const DEFAULT_LIST_LIMIT: i32 = 10;
 
 #[derive(clap::Subcommand, Debug)]
 enum Commands {
@@ -54,7 +65,7 @@ enum Commands {
     ListPosts {
         #[arg(short, long, default_value_t = 0)]
         offset: i32,
-        #[arg(short, long, default_value_t = 10)]
+        #[arg(short, long, default_value_t = DEFAULT_LIST_LIMIT)]
         limit: i32,
     },
     #[command(alias = "get")]
@@ -123,9 +134,9 @@ async fn run() -> Result<(), BlogClientError> {
 
     let host = cli.server.unwrap_or_else(|| {
         if cli.grpc {
-            "127.0.0.1:50051".to_string()
+            DEFAULT_GRPC_ADDR.to_string()
         } else {
-            "127.0.0.1:3000".to_string()
+            DEFAULT_HTTP_ADDR.to_string()
         }
     });
 

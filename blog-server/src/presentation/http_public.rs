@@ -1,6 +1,12 @@
 use actix_web::{HttpResponse, Responder, get, post, web};
 use serde::Deserialize;
 
+/// Default number of posts returned per page when `?limit` is not specified.
+const DEFAULT_PAGE_LIMIT: u32 = 10;
+
+/// Default starting offset when `?offset` is not specified.
+const DEFAULT_PAGE_OFFSET: u32 = 0;
+
 use crate::domain::error::DomainError;
 use crate::domain::post::ListPostsResponse;
 use crate::domain::user::{LoginRequest, LoginUserResponse, RegisterUserRequest};
@@ -83,8 +89,8 @@ pub async fn get_posts(
     query: web::Query<PaginationQuery>,
     state: web::Data<AppState>,
 ) -> Result<impl Responder, DomainError> {
-    let offset = query.offset.unwrap_or(0);
-    let limit = query.limit.unwrap_or(10);
+    let offset = query.offset.unwrap_or(DEFAULT_PAGE_OFFSET);
+    let limit = query.limit.unwrap_or(DEFAULT_PAGE_LIMIT);
 
     let blog_service = state.blog_service.clone();
 

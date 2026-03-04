@@ -40,12 +40,21 @@ pub mod blog {
 
 use blog::blog_service_server::BlogServiceServer;
 
+/// Port the Actix-Web HTTP REST API binds to.
+const HTTP_PORT: u16 = 3000;
+
+/// Port the Tonic gRPC server binds to.
+const GRPC_PORT: u16 = 50051;
+
+/// CORS preflight cache duration in seconds.
+const CORS_MAX_AGE_SECS: usize = 3600;
+
 fn build_cors(_config: &AppConfig) -> Cors {
     Cors::default()
         .allowed_methods(vec!["GET", "POST", "PUT", "DELETE", "OPTIONS"])
         .allow_any_header()
         .allow_any_origin()
-        .max_age(3600)
+        .max_age(CORS_MAX_AGE_SECS)
 }
 
 //#[actix_web::main]
@@ -74,8 +83,8 @@ async fn main() -> anyhow::Result<()> {
 
     run_migrations(&pool).await?;
 
-    let http_address = "0.0.0.0:3000";
-    let grpc_address = "0.0.0.0:50051".parse()?;
+    let http_address = format!("0.0.0.0:{HTTP_PORT}");
+    let grpc_address = format!("0.0.0.0:{GRPC_PORT}").parse()?;
 
     let secret_token = std::env::var("SECRET_TOKEN")
         .map_err(|_| anyhow::anyhow!("SECRET_TOKEN environment variable must be set"))?;
