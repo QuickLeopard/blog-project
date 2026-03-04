@@ -9,8 +9,7 @@ blog-project/
 ├── blog-server/      REST API на Actix-Web + gRPC-сервер на Tonic
 ├── blog-frontend/    SPA на Leptos 0.7 (компилируется в WASM, раздаётся через Trunk)
 ├── blog-client/      Общая клиентская библиотека (транспорты HTTP + gRPC)
-├── blog-cli/         Консольный клиент на основе blog-client
-└── blog-wasm/        Отдельный WASM-модуль утилит
+└── blog-cli/         Консольный клиент на основе blog-client
 ```
 
 **Стек технологий:** Rust 2024 edition, Actix-Web 4, Tonic (gRPC), Leptos 0.7 (CSR), SQLx + PostgreSQL, хэширование паролей Argon2, JWT-аутентификация, UI на Bootstrap 5.
