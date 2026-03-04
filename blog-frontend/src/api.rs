@@ -1,14 +1,21 @@
 use gloo_net::http::Request;
+use gloo_storage::{LocalStorage, Storage};
 
+use crate::auth::AUTH_KEY;
 use crate::types::*;
 
 const API_BASE: &str = "";
+pub const SESSION_EXPIRED: &str = "Session expired. Please log in again.";
 
 fn to_err<E: std::fmt::Display>(e: E) -> String {
     e.to_string()
 }
 
 async fn http_error(resp: gloo_net::http::Response) -> String {
+    if resp.status() == 401 {
+        let _ = LocalStorage::delete(AUTH_KEY);
+        return SESSION_EXPIRED.to_string();
+    }
     resp.json::<ErrorResponse>()
         .await
         .map(|e| e.error)

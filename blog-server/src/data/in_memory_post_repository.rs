@@ -76,52 +76,34 @@ impl PostRepository for InMemoryPostRepository {
         content: String,
         author_id: i64,
     ) -> Result<Post, DomainError> {
-        //todo!("Implement post update")
         let mut posts = self.posts.write().await;
-        if let Some(post) = posts.get_mut(&id)
-            && post.author_id == author_id
-        {
-            post.title = title;
-            post.content = content;
-            post.updated_at = chrono::Utc::now();
-            Ok(post.clone())
-        } else {
-            Err(DomainError::PostNotFound)
+        let post = posts.get_mut(&id).ok_or(DomainError::PostNotFound)?;
+        if post.author_id != author_id {
+            return Err(DomainError::Forbidden);
         }
+        post.title = title;
+        post.content = content;
+        post.updated_at = chrono::Utc::now();
+        Ok(post.clone())
     }
 
     async fn delete(&self, id: i64, author_id: i64) -> Result<bool, DomainError> {
-        //todo!("Implement post deletion")
         let mut posts = self.posts.write().await;
-        if let Some(post) = posts.get(&id)
-            && post.author_id == author_id
-        {
-            Ok(posts.remove(&id).is_some())
-        } else {
-            Err(DomainError::PostNotFound)
+        let post = posts.get(&id).ok_or(DomainError::PostNotFound)?;
+        if post.author_id != author_id {
+            return Err(DomainError::Forbidden);
         }
+        Ok(posts.remove(&id).is_some())
     }
 
     async fn list(&self, offset: i64, limit: i64) -> Result<Vec<Post>, DomainError> {
-        //todo!("Implement list posts")
         let posts = self.posts.read().await;
-
-        /*println!(
-            "📋 LIST - Repository pointer: {:p}, count: {}",
-            self.posts,
-            posts.len()
-        );
-
-        println!(
-            "📋 REPO ACCESS - Type: create, Pointer: {:p}",
-            self.posts.as_ref() as *const _,
-        );*/
-
-        Ok(posts
-            .values()
+        let mut sorted: Vec<Post> = posts.values().cloned().collect();
+        sorted.sort_by(|a, b| b.created_at.cmp(&a.created_at));
+        Ok(sorted
+            .into_iter()
             .skip(offset as usize)
             .take(limit as usize)
-            .cloned()
             .collect())
     }
 

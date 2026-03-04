@@ -2,7 +2,7 @@ use leptos::prelude::*;
 use leptos_router::hooks::use_navigate;
 
 use crate::api;
-use crate::auth::use_auth;
+use crate::auth::{clear_if_unauthorized, force_logout, is_token_expired, use_auth};
 use crate::components::post_form::PostForm;
 
 #[component]
@@ -14,10 +14,13 @@ pub fn PostCreate() -> impl IntoView {
     // Clone for the effect so `navigate` stays available for create_action
     let navigate_redirect = navigate.clone();
 
-    // Redirect to login if not authenticated
     Effect::new(move |_| {
-        if auth.get().is_none() {
-            navigate_redirect("/login", Default::default());
+        match auth.get() {
+            None => { navigate_redirect("/login", Default::default()); }
+            Some(ref a) if is_token_expired(&a.token) => {
+                force_logout(auth);
+            }
+            _ => {}
         }
     });
 
@@ -34,6 +37,7 @@ pub fn PostCreate() -> impl IntoView {
                     navigate(&format!("/posts/{}", post.id), Default::default());
                 }
                 Err(e) => {
+                    clear_if_unauthorized(&e, auth);
                     error.set(Some(e));
                 }
             }

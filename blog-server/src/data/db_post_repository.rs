@@ -15,6 +15,20 @@ impl DBPostRepository {
     pub fn new(pool: PgPool) -> Self {
         Self { pool }
     }
+
+    async fn check_ownership(&self, post_id: i64, author_id: i64) -> Result<(), DomainError> {
+        let row: Option<(i64,)> =
+            sqlx::query_as("SELECT author_id FROM posts WHERE id = $1")
+                .bind(post_id)
+                .fetch_optional(&self.pool)
+                .await?;
+
+        match row {
+            None => Err(DomainError::PostNotFound),
+            Some((owner_id,)) if owner_id != author_id => Err(DomainError::Forbidden),
+            _ => Ok(()),
+        }
+    }
 }
 
 fn map_row(row: PgRow) -> Result<Post, DomainError> {
@@ -83,6 +97,8 @@ impl PostRepository for DBPostRepository {
         content: String,
         author_id: i64,
     ) -> Result<Post, DomainError> {
+        self.check_ownership(id, author_id).await?;
+
         let row = sqlx::query(
             r#"
             UPDATE posts
@@ -96,11 +112,7 @@ impl PostRepository for DBPostRepository {
         .bind(id)
         .bind(author_id)
         .fetch_one(&self.pool)
-        .await
-        .map_err(|e| match e {
-            sqlx::Error::RowNotFound => DomainError::PostNotFound,
-            _ => DomainError::DatabaseError(e),
-        })?;
+        .await?;
 
         let post = map_row(row)?;
         info!(post_id = post.id, "post updated");
@@ -108,25 +120,15 @@ impl PostRepository for DBPostRepository {
     }
 
     async fn delete(&self, id: i64, author_id: i64) -> Result<bool, DomainError> {
-        let row = sqlx::query(
-            r#"
-            DELETE FROM posts
-            WHERE id = $1 AND author_id = $2
-            RETURNING id, title, content, author_id, created_at, updated_at
-            "#,
-        )
-        .bind(id)
-        .bind(author_id)
-        .fetch_one(&self.pool)
-        .await
-        .map_err(|e| match e {
-            sqlx::Error::RowNotFound => DomainError::PostNotFound,
-            _ => DomainError::DatabaseError(e),
-        })?;
+        self.check_ownership(id, author_id).await?;
 
-        let post = map_row(row)?;
-        info!(post_id = post.id, "post deleted");
+        sqlx::query("DELETE FROM posts WHERE id = $1 AND author_id = $2")
+            .bind(id)
+            .bind(author_id)
+            .execute(&self.pool)
+            .await?;
 
+        info!(post_id = id, "post deleted");
         Ok(true)
     }
 

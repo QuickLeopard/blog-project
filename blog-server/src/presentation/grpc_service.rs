@@ -235,7 +235,7 @@ impl blog::blog_service_server::BlogService for BlogGrpcService {
         let request = request.into_inner();
 
         let offset = request.offset.unwrap_or(0);
-        let limit = request.limit.unwrap_or(10);
+        let limit = request.limit.unwrap_or(10).min(100);
 
         let posts = self
             .blog_service

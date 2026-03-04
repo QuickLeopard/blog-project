@@ -4,16 +4,8 @@
 Cargo.lock
 .sqlx/
 .DS_Store
-*.html
-!blog-frontend/index.html
-*.txt
-!blog-frontend/style.css
-*.css
-*.js
 *.log
 */ISSUES.md
 CURRENT-ISSUES.md
 REVIEW.md
-*.bin
 dist/
-*.wasm

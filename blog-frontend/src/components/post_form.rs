@@ -37,7 +37,7 @@ pub fn PostForm(
         </div>
         <button
             class="btn btn-primary px-4"
-            disabled=move || loading.get()
+            disabled=move || loading.get() || title.get().trim().is_empty() || content.get().trim().is_empty()
             on:click=move |_| { on_submit.run((title.get(), content.get())); }
         >
             {move || if loading.get() {

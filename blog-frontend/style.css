@@ -1,0 +1,166 @@
+/* ─── Custom properties ─────────────────────────────────────────────────── */
+:root {
+  --accent: #4f6ef7;
+  --accent-hover: #3a57d8;
+  --card-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  --card-shadow-hover: 0 6px 20px rgba(0, 0, 0, 0.13);
+  --radius: 0.6rem;
+}
+
+/* ─── Global layout ─────────────────────────────────────────────────────── */
+body {
+  background-color: #f4f6fb;
+  color: #1a1d23;
+  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+
+main {
+  padding-top: 2rem;
+  padding-bottom: 4rem;
+  min-height: calc(100vh - 60px);
+}
+
+/* ─── Navbar tweaks ─────────────────────────────────────────────────────── */
+.navbar {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+}
+
+.navbar-brand {
+  letter-spacing: 0.03em;
+}
+
+/* ─── Post card (post list) ─────────────────────────────────────────────── */
+.post-card {
+  border: 1px solid #e2e6f0;
+  border-radius: var(--radius);
+  box-shadow: var(--card-shadow);
+  background: #fff;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.post-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--card-shadow-hover);
+}
+
+.post-card .card-title a {
+  color: #1a1d23;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.post-card .card-title a:hover {
+  color: var(--accent);
+}
+
+/* ─── Meta bar (post detail) ─────────────────────────────────────────────── */
+.meta-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding-bottom: 0.75rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid #e2e6f0;
+}
+
+.meta-author {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.meta-timestamp {
+  display: block;
+  font-size: 0.75rem;
+  color: #b0b7c3;
+  line-height: 1.6;
+}
+
+/* ─── Post content (post detail) ────────────────────────────────────────── */
+.post-content {
+  white-space: pre-wrap;
+  line-height: 1.8;
+  font-size: 1.05rem;
+  color: #2c2f36;
+  margin-top: 1.75rem;
+}
+
+/* ─── Auth card ─────────────────────────────────────────────────────────── */
+.auth-card {
+  border: none;
+  border-radius: var(--radius);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
+  background: #fff;
+}
+
+/* ─── Form styling ──────────────────────────────────────────────────────── */
+.form-control:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 0.2rem rgba(79, 110, 247, 0.2);
+}
+
+.form-label {
+  font-weight: 500;
+  margin-bottom: 0.3rem;
+  color: #374151;
+}
+
+textarea.form-control {
+  resize: vertical;
+}
+
+/* ─── Primary button override ───────────────────────────────────────────── */
+.btn-primary {
+  background-color: var(--accent);
+  border-color: var(--accent);
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+  background-color: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+/* ─── Page headings ─────────────────────────────────────────────────────── */
+.page-heading {
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin-bottom: 1.5rem;
+}
+
+/* ─── Loading skeleton ──────────────────────────────────────────────────── */
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+
+.loading-text {
+  animation: skeleton-pulse 1.4s ease-in-out infinite;
+  color: #9ca3af;
+  font-style: italic;
+}
+
+/* ─── Pagination ────────────────────────────────────────────────────────── */
+.pagination-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.pagination-bar .page-label {
+  color: #6c757d;
+  font-size: 0.9rem;
+  min-width: 4rem;
+  text-align: center;
+}
+
+/* ─── Owner action bar (post detail) ────────────────────────────────────── */
+.owner-actions {
+  display: flex;
+  gap: 0.6rem;
+  margin-top: 2rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid #e2e6f0;
+}

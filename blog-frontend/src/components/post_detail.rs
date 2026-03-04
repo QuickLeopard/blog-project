@@ -3,7 +3,7 @@ use leptos_router::components::A;
 use leptos_router::hooks::{use_navigate, use_params_map};
 
 use crate::api;
-use crate::auth::use_auth;
+use crate::auth::{clear_if_unauthorized, use_auth};
 
 #[component]
 pub fn PostDetail() -> impl IntoView {
@@ -13,17 +13,18 @@ pub fn PostDetail() -> impl IntoView {
     let delete_error = RwSignal::new(None::<String>);
     let confirming_delete = RwSignal::new(false);
 
-    let id = move || {
-        params
-            .get()
-            .get("id")
-            .and_then(|id| id.parse::<i64>().ok())
-            .unwrap_or(0)
+    let id = move || -> Option<i64> {
+        params.get().get("id").and_then(|id| id.parse().ok())
     };
 
     let post_resource = LocalResource::new(move || {
         let post_id = id();
-        async move { api::get_post(post_id).await }
+        async move {
+            match post_id {
+                Some(pid) => api::get_post(pid).await,
+                None => Err("Invalid post ID".to_string()),
+            }
+        }
     });
 
     let delete_action = Action::new_local(move |_: &()| {
@@ -32,12 +33,17 @@ pub fn PostDetail() -> impl IntoView {
         let navigate = navigate.clone();
 
         async move {
-            match api::delete_post(post_id, &token).await {
+            let Some(pid) = post_id else {
+                delete_error.set(Some("Invalid post ID".to_string()));
+                return;
+            };
+            match api::delete_post(pid, &token).await {
                 Ok(_) => {
                     delete_error.set(None);
                     navigate("/", Default::default());
                 }
                 Err(e) => {
+                    clear_if_unauthorized(&e, auth);
                     confirming_delete.set(false);
                     delete_error.set(Some(e));
                 }

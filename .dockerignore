@@ -1,0 +1,13 @@
+.git/
+target/
+.env
+.env.*
+!.env.example
+*.log
+*.md
+!blog-server/README.md
+!blog-frontend/README.md
+dist/
+.sqlx/
+.blog_token
+node_modules/

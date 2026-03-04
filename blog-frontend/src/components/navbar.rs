@@ -1,8 +1,7 @@
-use gloo_storage::Storage;
 use leptos::prelude::*;
 use leptos_router::components::A;
 
-use crate::auth::use_auth;
+use crate::auth::{force_logout, use_auth};
 
 #[component]
 pub fn Navbar() -> impl IntoView {
@@ -16,8 +15,7 @@ pub fn Navbar() -> impl IntoView {
     };
 
     let on_logout = move |_| {
-        gloo_storage::LocalStorage::delete("blog_auth");
-        auth.set(None);
+        force_logout(auth);
     };
 
     view! {

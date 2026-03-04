@@ -4,6 +4,9 @@ use serde::Deserialize;
 /// Default number of posts returned per page when `?limit` is not specified.
 const DEFAULT_PAGE_LIMIT: u32 = 10;
 
+/// Maximum allowed value for `?limit` to prevent loading the entire table.
+const MAX_PAGE_LIMIT: u32 = 100;
+
 /// Default starting offset when `?offset` is not specified.
 const DEFAULT_PAGE_OFFSET: u32 = 0;
 
@@ -90,7 +93,7 @@ pub async fn get_posts(
     state: web::Data<AppState>,
 ) -> Result<impl Responder, DomainError> {
     let offset = query.offset.unwrap_or(DEFAULT_PAGE_OFFSET);
-    let limit = query.limit.unwrap_or(DEFAULT_PAGE_LIMIT);
+    let limit = query.limit.unwrap_or(DEFAULT_PAGE_LIMIT).min(MAX_PAGE_LIMIT);
 
     let blog_service = state.blog_service.clone();
 

@@ -5,7 +5,7 @@ use leptos_router::hooks::use_navigate;
 use gloo_storage::Storage;
 
 use crate::api;
-use crate::auth::{use_auth, AuthState};
+use crate::auth::{use_auth, AuthState, AUTH_KEY};
 
 #[component]
 pub fn Login() -> impl IntoView {
@@ -28,7 +28,10 @@ pub fn Login() -> impl IntoView {
                         token: resp.token,
                         user: resp.user,
                     };
-                    gloo_storage::LocalStorage::set("blog_auth", &state).ok();
+                    if let Err(e) = gloo_storage::LocalStorage::set(AUTH_KEY, &state) {
+                        error.set(Some(format!("Failed to save session: {e}")));
+                        return;
+                    }
                     auth.set(Some(state));
                     error.set(None);
                     navigate("/", Default::default());
@@ -74,7 +77,7 @@ pub fn Login() -> impl IntoView {
 
                     <button
                         class="btn btn-primary w-100 py-2"
-                        disabled=move || pending.get()
+                        disabled=move || pending.get() || username.get().trim().is_empty() || password.get().trim().is_empty()
                         on:click=move |_| { login_action.dispatch(()); }
                     >
                         {move || if pending.get() {
