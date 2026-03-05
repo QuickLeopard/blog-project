@@ -52,7 +52,7 @@ pub fn provide_auth_context() {
         .filter(|a: &AuthState| !is_token_expired(&a.token));
 
     if initial.is_none() {
-        let _ = LocalStorage::delete(AUTH_KEY);
+        LocalStorage::delete(AUTH_KEY);
     }
 
     let auth = RwSignal::new(initial);
@@ -66,7 +66,7 @@ pub fn use_auth() -> RwSignal<Option<AuthState>> {
 
 /// Clears both localStorage and the reactive signal.
 pub fn force_logout(auth: RwSignal<Option<AuthState>>) {
-    let _ = LocalStorage::delete(AUTH_KEY);
+    LocalStorage::delete(AUTH_KEY);
     auth.set(None);
 }
 

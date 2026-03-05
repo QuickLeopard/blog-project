@@ -11,9 +11,16 @@ fn to_err<E: std::fmt::Display>(e: E) -> String {
     e.to_string()
 }
 
-async fn http_error(resp: gloo_net::http::Response) -> String {
-    if resp.status() == 401 {
-        let _ = LocalStorage::delete(AUTH_KEY);
+/// Parse a non-2xx response into a user-facing error string.
+///
+/// `authenticated` should be `true` only when the request was sent with a
+/// Bearer token (i.e. the user was already logged in). In that case a 401
+/// means the token expired and we clear localStorage so the UI reacts
+/// immediately. For unauthenticated calls (login / register) a 401 just
+/// means wrong credentials — we must NOT wipe the stored session.
+async fn http_error(resp: gloo_net::http::Response, authenticated: bool) -> String {
+    if resp.status() == 401 && authenticated {
+        LocalStorage::delete(AUTH_KEY);
         return SESSION_EXPIRED.to_string();
     }
     resp.json::<ErrorResponse>()
@@ -38,7 +45,7 @@ pub async fn login(username: &str, password: &str) -> Result<LoginUserResponse, 
         .map_err(to_err)?;
 
     if !resp.ok() {
-        return Err(http_error(resp).await);
+        return Err(http_error(resp, false).await);
     }
 
     resp.json::<LoginUserResponse>().await.map_err(to_err)
@@ -66,7 +73,7 @@ pub async fn register(
         .map_err(|e| e.to_string())?;
 
     if !resp.ok() {
-        return Err(http_error(resp).await);
+        return Err(http_error(resp, false).await);
     }
 
     resp.json::<LoginUserResponse>()
@@ -85,7 +92,7 @@ pub async fn get_posts(offset: i32, limit: i32) -> Result<ListPostsResponse, Str
     .map_err(|e| e.to_string())?;
 
     if !resp.ok() {
-        return Err(http_error(resp).await);
+        return Err(http_error(resp, false).await);
     }
 
     resp.json::<ListPostsResponse>()
@@ -101,7 +108,7 @@ pub async fn get_post(id: i64) -> Result<Post, String> {
         .map_err(|e| e.to_string())?;
 
     if !resp.ok() {
-        return Err(http_error(resp).await);
+        return Err(http_error(resp, false).await);
     }
 
     resp.json::<Post>().await.map_err(|e| e.to_string())
@@ -125,7 +132,7 @@ pub async fn create_post(title: &str, content: &str, token: &str) -> Result<Post
         .map_err(|e| e.to_string())?;
 
     if !resp.ok() {
-        return Err(http_error(resp).await);
+        return Err(http_error(resp, true).await);
     }
 
     resp.json::<Post>().await.map_err(|e| e.to_string())
@@ -149,7 +156,7 @@ pub async fn update_post(id: i64, title: &str, content: &str, token: &str) -> Re
         .map_err(|e| e.to_string())?;
 
     if !resp.ok() {
-        return Err(http_error(resp).await);
+        return Err(http_error(resp, true).await);
     }
 
     resp.json::<Post>().await.map_err(|e| e.to_string())
@@ -164,7 +171,7 @@ pub async fn delete_post(id: i64, token: &str) -> Result<DeletePostResponse, Str
         .map_err(|e| e.to_string())?;
 
     if !resp.ok() {
-        return Err(http_error(resp).await);
+        return Err(http_error(resp, true).await);
     }
 
     resp.json::<DeletePostResponse>()

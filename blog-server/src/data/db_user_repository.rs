@@ -48,7 +48,21 @@ impl UserRepository for DbUserRepository {
         .bind(email)
         .bind(password_hash)
         .fetch_one(&self.pool)
-        .await?;
+        .await
+        .map_err(|e| {
+            // Postgres error code 23505 = unique_violation (duplicate username or email).
+            // Check the constraint name to produce a specific, user-facing message.
+            if let sqlx::Error::Database(ref db_err) = e {
+                if db_err.code().as_deref() == Some("23505") {
+                    let msg = match db_err.constraint() {
+                        Some(c) if c.contains("email") => "Email is already taken",
+                        _ => "Username is already taken",
+                    };
+                    return DomainError::UserAlreadyExists(msg.to_string());
+                }
+            }
+            DomainError::DatabaseError(e)
+        })?;
 
         let user = map_row(row)?;
         info!(user_id = user.id, "user created");
